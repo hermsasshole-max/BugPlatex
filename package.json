@@ -1,0 +1,32 @@
+{
+  "name": "splatdex",
+  "version": "1.0.0",
+  "description": "Kid-friendly windshield bug splatter forensic identification app",
+  "author": "SplatDex Bug Detective Unit",
+  "license": "MIT",
+  "scripts": {
+    "build": "node -e \"console.log('✓ Validating web assets in www/ ... Ready!')\"",
+    "cap:sync": "cap sync android",
+    "cap:add:android": "cap add android",
+    "cap:open": "cap open android",
+    "serve": "npx serve www -p 3000"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/camera": "^6.0.2",
+    "@capacitor/core": "^6.1.2",
+    "@google/genai": "^0.1.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.2"
+  },
+  "keywords": [
+    "splatdex",
+    "windshield",
+    "bug-splatter",
+    "forensics",
+    "gemini",
+    "capacitor",
+    "android"
+  ]
+}

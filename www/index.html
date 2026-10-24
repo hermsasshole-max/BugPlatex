@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>SplatDex - Windshield Bug Detective</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            splat: {
+              lime: '#84cc16',
+              neon: '#22c55e',
+              amber: '#f59e0b',
+              orange: '#f97316',
+              dark: '#0f172a',
+              card: '#1e293b',
+              border: '#334155',
+              accent: '#38bdf8'
+            }
+          },
+          animation: {
+            'scan': 'scan 2.5s ease-in-out infinite',
+            'pulse-glow': 'pulseGlow 2s infinite',
+            'bounce-gentle': 'bounceGentle 1.8s infinite'
+          },
+          keyframes: {
+            scan: {
+              '0%, 100%': { transform: 'translateY(-100%)' },
+              '50%': { transform: 'translateY(100%)' }
+            },
+            pulseGlow: {
+              '0%, 100%': { opacity: '0.4', filter: 'drop-shadow(0 0 8px rgba(132, 204, 22, 0.4))' },
+              '50%': { opacity: '0.9', filter: 'drop-shadow(0 0 16px rgba(132, 204, 22, 0.8))' }
+            },
+            bounceGentle: {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-6px)' }
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts: Inter & Fredoka for Kid-Friendly Detective Look -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    .font-brand {
+      font-family: 'Fredoka', cursive, sans-serif;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="bg-splat-dark text-slate-100 min-h-screen flex flex-col antialiased selection:bg-splat-lime selection:text-slate-900 pb-12">
+
+  <!-- TOP APP BAR -->
+  <header class="sticky top-0 z-40 bg-splat-dark/95 backdrop-blur-md border-b border-splat-border/80 px-4 py-3">
+    <div class="max-w-xl mx-auto flex items-center justify-between">
+      <div class="flex items-center space-x-2.5">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-splat-orange via-splat-amber to-splat-lime flex items-center justify-center shadow-lg shadow-lime-500/20 text-xl font-bold">
+          🔍
+        </div>
+        <div>
+          <h1 class="text-xl font-bold font-brand tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-lime-400 via-amber-300 to-orange-400">
+            SplatDex
+          </h1>
+          <p class="text-[11px] text-slate-400 font-medium uppercase tracking-wider flex items-center gap-1">
+            <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+            Forensic Bug Lab
+          </p>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="flex items-center space-x-2">
+        <button id="soundToggleBtn" title="Toggle Sound FX" class="p-2 rounded-xl bg-splat-card border border-splat-border text-slate-300 hover:text-white transition active:scale-95 text-sm">
+          🔊
+        </button>
+        <button id="openSettingsBtn" title="API Key & Settings" class="p-2 rounded-xl bg-splat-card border border-splat-border text-slate-300 hover:text-white transition active:scale-95 text-sm flex items-center gap-1">
+          <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-xl mx-auto w-full px-4 pt-4 flex-1 flex flex-col space-y-4">
+
+    <!-- WELCOME / HERO BANNER -->
+    <section class="bg-gradient-to-br from-splat-card to-slate-900 border border-splat-border rounded-2xl p-4 shadow-md relative overflow-hidden">
+      <div class="absolute -right-6 -bottom-6 opacity-10 text-8xl pointer-events-none select-none">
+        🪰
+      </div>
+      <div class="relative z-10 flex items-start justify-between">
+        <div>
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-lime-500/10 text-lime-400 border border-lime-500/20 mb-1.5">
+            Windshield Forensics
+          </span>
+          <h2 class="text-lg font-bold font-brand text-white">Who Met The Glass?</h2>
+          <p class="text-xs text-slate-300 mt-0.5 leading-relaxed">
+            Snap a photo of any bug splatter on your car windshield. SplatDex AI will analyze the forensic fluids, wing fragments, and coloration to deduce the culprit!
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SETTINGS MODAL / DRAWER -->
+    <div id="settingsModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-splat-card border border-splat-border rounded-2xl p-5 w-full max-w-md shadow-2xl relative">
+        <button id="closeSettingsBtn" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1 text-lg">✕</button>
+        <div class="flex items-center space-x-2.5 mb-3">
+          <span class="text-2xl">🔑</span>
+          <h3 class="text-lg font-bold font-brand text-white">Gemini API Key</h3>
+        </div>
+        <p class="text-xs text-slate-300 mb-3 leading-relaxed">
+          Your key is saved locally in your browser/device storage (<code class="bg-slate-800 px-1 py-0.5 rounded text-amber-300">localStorage</code>) to query the <span class="text-lime-400 font-semibold">gemini-2.5-flash</span> vision model.
+        </p>
+
+        <div class="space-y-3">
+          <div>
+            <label for="apiKeyInput" class="block text-xs font-semibold text-slate-300 mb-1">Google GenAI / Gemini Key</label>
+            <div class="relative">
+              <input type="password" id="apiKeyInput" placeholder="AIzaSy..." class="w-full bg-slate-900 border border-splat-border rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-lime-500 focus:ring-1 focus:ring-lime-500">
+              <button type="button" id="toggleKeyVisibility" class="absolute right-3 top-2.5 text-xs text-slate-400 hover:text-slate-200">Show</button>
+            </div>
+          </div>
+
+          <div id="apiKeyStatus" class="text-xs font-medium text-slate-400 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+            Checking configuration...
+          </div>
+
+          <div class="flex items-center justify-end space-x-2 pt-2">
+            <button id="saveApiKeyBtn" class="px-4 py-2 bg-gradient-to-r from-lime-500 to-emerald-600 hover:from-lime-400 hover:to-emerald-500 text-slate-950 font-bold rounded-xl text-sm transition shadow-md shadow-lime-500/20 active:scale-95">
+              Save & Lock Key
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FORENSIC CAMERA & PREVIEW CANVAS AREA -->
+    <section class="bg-splat-card border border-splat-border rounded-2xl p-4 shadow-lg flex flex-col space-y-3">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold font-brand text-slate-200 flex items-center gap-1.5">
+          <span>🔬</span> Forensic Specimen View
+        </h3>
+        <span id="specimenBadge" class="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
+          No Specimen Loaded
+        </span>
+      </div>
+
+      <!-- Preview Box with Crosshairs & Canvas -->
+      <div class="relative w-full aspect-[4/3] rounded-xl bg-slate-950 border-2 border-dashed border-splat-border overflow-hidden flex items-center justify-center group" id="previewContainer">
+
+        <!-- Initial Placeholder State -->
+        <div id="emptyPreviewPlaceholder" class="text-center p-6 flex flex-col items-center justify-center space-y-2">
+          <div class="w-16 h-16 rounded-full bg-slate-900/80 border border-splat-border flex items-center justify-center text-3xl animate-bounce-gentle">
+            🎯
+          </div>
+          <p class="text-sm font-semibold text-slate-300 font-brand">Target Splatter on Glass</p>
+          <p class="text-xs text-slate-400 max-w-xs">
+            Tap Camera or Upload below to capture the bug residue.
+          </p>
+        </div>
+
+        <!-- Hidden canvas for image manipulation / rendering -->
+        <canvas id="splatterCanvas" class="hidden absolute inset-0 w-full h-full object-contain"></canvas>
+
+        <!-- Image tag as primary display -->
+        <img id="imagePreview" alt="Splatter Specimen" class="hidden absolute inset-0 w-full h-full object-contain">
+
+        <!-- Forensic Reticle Overlay -->
+        <div id="reticleOverlay" class="hidden absolute inset-0 pointer-events-none">
+          <!-- Crosshairs -->
+          <div class="absolute inset-0 flex items-center justify-center opacity-40">
+            <div class="w-full h-[1px] bg-lime-400/50"></div>
+            <div class="h-full w-[1px] bg-lime-400/50 absolute"></div>
+          </div>
+          <!-- Target Ring -->
+          <div class="absolute inset-0 m-auto w-32 h-32 border border-lime-400/60 rounded-full border-dashed animate-spin" style="animation-duration: 20s;"></div>
+          <!-- Corner brackets -->
+          <div class="absolute top-3 left-3 w-4 h-4 border-t-2 border-l-2 border-lime-400"></div>
+          <div class="absolute top-3 right-3 w-4 h-4 border-t-2 border-r-2 border-lime-400"></div>
+          <div class="absolute bottom-3 left-3 w-4 h-4 border-b-2 border-l-2 border-lime-400"></div>
+          <div class="absolute bottom-3 right-3 w-4 h-4 border-b-2 border-r-2 border-lime-400"></div>
+        </div>
+
+        <!-- Scanning Bar Animation (Shown during AI analysis) -->
+        <div id="scanningBeam" class="hidden absolute inset-x-0 h-1.5 bg-gradient-to-r from-transparent via-lime-400 to-transparent shadow-[0_0_15px_#84cc16] pointer-events-none animate-scan"></div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="grid grid-cols-2 gap-2.5 pt-1">
+        <!-- Native Camera Button (Capacitor or Fallback) -->
+        <button id="snapPhotoBtn" class="flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-splat-lime to-emerald-500 hover:from-lime-400 hover:to-emerald-400 text-slate-950 font-bold font-brand rounded-xl shadow-lg shadow-lime-500/20 active:scale-95 transition text-sm">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+          </svg>
+          Snap Splat
+        </button>
+
+        <!-- Gallery / File Upload Button -->
+        <label for="fileInput" class="cursor-pointer flex items-center justify-center gap-2 py-3 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-splat-border font-bold font-brand rounded-xl active:scale-95 transition text-sm text-center">
+          <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+          Upload Photo
+        </label>
+        <input type="file" id="fileInput" accept="image/*" class="hidden">
+      </div>
+
+      <!-- Quick Samples for immediate fun testing -->
+      <div class="pt-2 border-t border-splat-border/60">
+        <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1">
+          <span>⚡</span> Or Try A Simulated Test Splat:
+        </p>
+        <div class="flex flex-wrap gap-1.5">
+          <button data-sample="june_beetle" class="sample-splat-btn text-xs px-2.5 py-1 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-lime-300 border border-slate-700 active:scale-95 transition">
+            🪲 June Beetle
+          </button>
+          <button data-sample="lovebug" class="sample-splat-btn text-xs px-2.5 py-1 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-orange-300 border border-slate-700 active:scale-95 transition">
+            ❤️ Lovebug Duo
+          </button>
+          <button data-sample="moth" class="sample-splat-btn text-xs px-2.5 py-1 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-amber-300 border border-slate-700 active:scale-95 transition">
+            🦋 Dusty Moth
+          </button>
+          <button data-sample="dragonfly" class="sample-splat-btn text-xs px-2.5 py-1 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-sky-300 border border-slate-700 active:scale-95 transition">
+            ⚡ Dragonfly
+          </button>
+        </div>
+      </div>
+
+      <!-- Analyze CTA Button -->
+      <button id="analyzeBtn" disabled class="w-full mt-2 py-3 px-4 bg-gradient-to-r from-orange-500 via-amber-500 to-lime-500 disabled:opacity-40 disabled:cursor-not-allowed hover:brightness-110 text-slate-950 font-bold font-brand rounded-xl shadow-lg transition active:scale-[0.98] text-base flex items-center justify-center gap-2">
+        <span id="analyzeBtnIcon">🔎</span>
+        <span id="analyzeBtnText">Run Splat Forensics</span>
+      </button>
+    </section>
+
+    <!-- LOADING / SCANNING STATE -->
+    <section id="analysisProgressCard" class="hidden bg-splat-card border border-lime-500/30 rounded-2xl p-5 shadow-xl text-center space-y-3">
+      <div class="inline-flex p-3 rounded-2xl bg-lime-500/10 border border-lime-500/30 text-lime-400 text-3xl animate-spin" style="animation-duration: 3s;">
+        ⚙️
+      </div>
+      <div>
+        <h4 id="progressStatusText" class="text-base font-bold font-brand text-lime-400">Forensic Investigation Active</h4>
+        <p id="progressDetailText" class="text-xs text-slate-300 mt-1">Analyzing fluid colorimetry and wing fragment shards...</p>
+      </div>
+      <!-- Progress Bar -->
+      <div class="w-full bg-slate-900 rounded-full h-2.5 overflow-hidden border border-slate-800">
+        <div id="progressBarFill" class="bg-gradient-to-r from-lime-500 via-amber-400 to-orange-500 h-2.5 rounded-full transition-all duration-300 w-1/4"></div>
+      </div>
+    </section>
+
+    <!-- ERROR BANNER -->
+    <div id="errorCard" class="hidden bg-red-950/80 border border-red-500/50 rounded-2xl p-4 text-red-200 text-xs flex items-start gap-3 shadow-lg">
+      <span class="text-xl">⚠️</span>
+      <div class="flex-1">
+        <h5 class="font-bold font-brand text-red-300 text-sm">Forensic Analysis Error</h5>
+        <p id="errorMessage" class="mt-0.5 leading-relaxed">Could not identify specimen. Check your Gemini API key in settings or verify photo quality.</p>
+      </div>
+      <button id="dismissErrorBtn" class="text-red-400 hover:text-white font-bold p-1">✕</button>
+    </div>
+
+    <!-- FORENSIC REPORT CARD (AI OUTPUT CARD) -->
+    <section id="reportCard" class="hidden bg-splat-card border-2 border-lime-500/40 rounded-2xl p-5 shadow-2xl space-y-4">
+
+      <!-- Header with Bug Name, Scientific Name & Confidence Badge -->
+      <div class="flex items-start justify-between border-b border-splat-border pb-3 gap-2">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-2xl" id="reportBugEmoji">🪲</span>
+            <h3 id="reportBugName" class="text-2xl font-bold font-brand text-transparent bg-clip-text bg-gradient-to-r from-lime-400 via-amber-300 to-orange-400">
+              Bug Name
+            </h3>
+          </div>
+          <p id="reportScientificName" class="text-xs italic text-slate-400 mt-0.5 font-medium pl-8">
+            Scientificus namus
+          </p>
+        </div>
+
+        <!-- Confidence Badge -->
+        <div id="confidenceBadge" class="flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-bold font-brand border">
+          Confidence
+        </div>
+      </div>
+
+      <!-- Eulogy Section -->
+      <div class="bg-slate-900/90 rounded-xl p-3.5 border border-slate-800 relative">
+        <span class="absolute -top-2.5 left-3 px-2 py-0.5 bg-slate-800 text-[10px] font-bold uppercase tracking-wider rounded text-amber-400 border border-slate-700">
+          Windshield Eulogy
+        </span>
+        <p id="reportEulogy" class="text-xs text-slate-200 italic mt-1 leading-relaxed">
+          "A brave voyager who flew too close to the Ford F-150."
+        </p>
+      </div>
+
+      <!-- Fun Bug Facts (3 items) -->
+      <div>
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
+          <span>🧠</span> 3 Detective Facts
+        </h4>
+        <ul id="reportBugFactsList" class="space-y-2">
+          <!-- Dynamically populated -->
+        </ul>
+      </div>
+
+      <!-- Windscreen Cleanup Tip -->
+      <div class="bg-emerald-950/40 border border-emerald-500/30 rounded-xl p-3.5">
+        <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-1 flex items-center gap-1.5">
+          <span>🧽</span> Windscreen Cleanup Tip
+        </h4>
+        <p id="reportCleanupTip" class="text-xs text-slate-200 leading-relaxed">
+          Soak with warm soapy water for 2 minutes before wiping.
+        </p>
+      </div>
+
+      <!-- Pre-Splat Image Concept (Imagined alive) -->
+      <div id="preSplatContainer" class="bg-slate-900/60 border border-slate-800 rounded-xl p-3 text-xs text-slate-300">
+        <span class="text-[10px] uppercase font-bold text-sky-400 tracking-wider block mb-1">
+          🎨 Pre-Impact Identity:
+        </span>
+        <p id="reportPreSplatPrompt" class="text-xs italic text-slate-400">
+          Imagined in flight before the impact...
+        </p>
+      </div>
+
+      <!-- Save to SplatDex Diary Button -->
+      <div class="pt-2 flex gap-2">
+        <button id="saveToLogBtn" class="flex-1 py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-lime-400 border border-lime-500/30 font-brand font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition active:scale-95">
+          <span>📖</span> Save to My SplatDex Log
+        </button>
+        <button id="shareReportBtn" class="py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/30 font-brand font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition active:scale-95">
+          <span>📤</span> Share
+        </button>
+      </div>
+    </section>
+
+    <!-- SPLATDEX LOG / HISTORY SECTION -->
+    <section class="bg-splat-card border border-splat-border rounded-2xl p-4 shadow-md space-y-3">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-lg">📚</span>
+          <h3 class="text-sm font-bold font-brand text-slate-200">SplatDex Field Journal</h3>
+        </div>
+        <span id="journalCount" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-lime-400 border border-slate-700">
+          0 Logged
+        </span>
+      </div>
+
+      <div id="journalEmptyState" class="text-center py-4 text-xs text-slate-400">
+        No splats logged on this road trip yet! Snap your first windshield bug above.
+      </div>
+
+      <div id="journalList" class="hidden space-y-2 max-h-56 overflow-y-auto custom-scrollbar pr-1">
+        <!-- Log items dynamically injected -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900 border border-lime-500/40 text-lime-300 px-4 py-2 rounded-full text-xs font-bold shadow-2xl opacity-0 transition-opacity pointer-events-none duration-300">
+    Specimen logged!
+  </div>
+
+  <!-- APPLICATION LOGIC -->
+  <script src="app.js"></script>
+</body>
+</html>

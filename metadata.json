@@ -1,0 +1,6 @@
+{
+  "name": "SplatDex",
+  "description": "Windshield bug splatter identification and forensic detective app for road trips and curious kids.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
