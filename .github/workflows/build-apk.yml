@@ -81,13 +81,13 @@ jobs:
         run: |
           if [ -f "android/gradlew" ]; then
             echo "Building from android/ directory using ./gradlew..."
-            cd android && ./gradlew assembleDebug --stacktrace
+            cd android && ./gradlew assembleDebug -Djava.awt.headless=true --stacktrace
           elif [ -f "./gradlew" ]; then
             echo "Building from root directory using ./gradlew..."
-            ./gradlew assembleDebug --stacktrace
+            ./gradlew assembleDebug -Djava.awt.headless=true --stacktrace
           else
             echo "Building with system Gradle..."
-            gradle assembleDebug --stacktrace
+            gradle assembleDebug -Djava.awt.headless=true --stacktrace
           fi
 
       - name: Locate Output APK
