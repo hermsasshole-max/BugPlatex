@@ -36,30 +36,50 @@ jobs:
         run: |
           npm run build
 
-      - name: Sync Capacitor Android
+      - name: Sync Web Assets to Android
         run: |
-          npx cap sync android
+          if [ -d "android" ] && [ -f "android/build.gradle" ]; then
+            echo "Syncing web assets to Capacitor android project..."
+            npx cap sync android
+          else
+            echo "Syncing web assets to root Android project assets/www..."
+            mkdir -p app/src/main/assets/www
+            cp -r www/* app/src/main/assets/www/
+          fi
 
-      - name: Make Gradle Wrapper Executable
+      - name: Prepare Gradle Wrapper
         run: |
           if [ -f "android/gradlew" ]; then
             chmod +x android/gradlew
           elif [ -f "./gradlew" ]; then
             chmod +x ./gradlew
+          else
+            echo "Gradle wrapper missing from repo; generating wrapper via system Gradle..."
+            gradle wrapper
+            chmod +x ./gradlew
           fi
 
       - name: Build Android Debug APK
         run: |
-          if [ -d "android" ]; then
+          if [ -f "android/gradlew" ]; then
+            echo "Building from android/ directory using ./gradlew..."
             cd android && ./gradlew assembleDebug --stacktrace
-          else
+          elif [ -f "./gradlew" ]; then
+            echo "Building from root directory using ./gradlew..."
             ./gradlew assembleDebug --stacktrace
+          else
+            echo "Building with system Gradle..."
+            gradle assembleDebug --stacktrace
           fi
 
       - name: Locate Output APK
         id: apk-path
         run: |
           APK_FILE=$(find . -name "*.apk" | grep -E "debug" | head -n 1)
+          if [ -z "$APK_FILE" ]; then
+            echo "Error: Could not find generated debug APK file!"
+            exit 1
+          fi
           echo "Found APK at: $APK_FILE"
           echo "apk_path=$APK_FILE" >> $GITHUB_OUTPUT
 
