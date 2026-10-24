@@ -95,7 +95,6 @@ fun SplatDexWebView(
                     domStorageEnabled = true
                     allowFileAccess = true
                     allowContentAccess = true
-                    databaseEnabled = true
                     mediaPlaybackRequiresUserGesture = false
                     cacheMode = WebSettings.LOAD_DEFAULT
                     useWideViewPort = true
