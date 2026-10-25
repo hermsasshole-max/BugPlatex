@@ -1,3 +1,12 @@
+// Global Error Trapping
+window.onerror = function(message, source, lineno, colno, error) {
+  console.error(`[SplatDex JS Error] ${message} (${source}:${lineno}:${colno})`, error);
+  return false;
+};
+window.addEventListener("unhandledrejection", function(event) {
+  console.warn("[SplatDex Promise Rejection]", event.reason);
+});
+
 /**
  * SplatDex - Windshield Bug Detective App
  * Vision AI integration with Gemini 3.8 Flash, Capacitor Camera,
@@ -349,6 +358,18 @@ const elements = {
   closeGuideBtn: document.getElementById('closeGuideBtn'),
   guideModal: document.getElementById('guideModal'),
   guideBugList: document.getElementById('guideBugList'),
+  guideSearchInput: document.getElementById('guideSearchInput'),
+  clearGuideSearchBtn: document.getElementById('clearGuideSearchBtn'),
+  guideTabSpecies: document.getElementById('guideTabSpecies'),
+  guideTabHandbook: document.getElementById('guideTabHandbook'),
+  guideTabCleanup: document.getElementById('guideTabCleanup'),
+  guideTabBingo: document.getElementById('guideTabBingo'),
+  guideSpeciesSection: document.getElementById('guideSpeciesSection'),
+  guideHandbookSection: document.getElementById('guideHandbookSection'),
+  guideCleanupSection: document.getElementById('guideCleanupSection'),
+  guideBingoSection: document.getElementById('guideBingoSection'),
+  bingoListContainer: document.getElementById('bingoListContainer'),
+  resetBingoBtn: document.getElementById('resetBingoBtn'),
 
   snapPhotoBtn: document.getElementById('snapPhotoBtn'),
   cameraInput: document.getElementById('cameraInput'),
@@ -582,9 +603,13 @@ function attachEventListeners() {
     if (e.target === elements.settingsModal) elements.settingsModal.classList.add('hidden');
   });
 
-  // Field Guide Modal
+  // Field Guide Modal Open / Close
   elements.openGuideBtn?.addEventListener('click', () => {
     playSound('click');
+    refreshElementReferences();
+    switchGuideTab('species');
+    renderFieldGuide('all');
+    initBingoList();
     elements.guideModal?.classList.remove('hidden');
   });
   elements.closeGuideBtn?.addEventListener('click', () => {
@@ -595,17 +620,60 @@ function attachEventListeners() {
     if (e.target === elements.guideModal) elements.guideModal.classList.add('hidden');
   });
 
+  // Guide Navigation Tabs
+  elements.guideTabSpecies?.addEventListener('click', () => switchGuideTab('species'));
+  elements.guideTabHandbook?.addEventListener('click', () => switchGuideTab('handbook'));
+  elements.guideTabCleanup?.addEventListener('click', () => switchGuideTab('cleanup'));
+  elements.guideTabBingo?.addEventListener('click', () => switchGuideTab('bingo'));
+
+  // Guide Real-time Search
+  elements.guideSearchInput?.addEventListener('input', (e) => {
+    const term = e.target.value.trim().toLowerCase();
+    if (elements.clearGuideSearchBtn) {
+      elements.clearGuideSearchBtn.classList.toggle('hidden', term.length === 0);
+    }
+    const currentActiveFilterBtn = document.querySelector('.guide-filter-btn.bg-lime-500');
+    const cat = currentActiveFilterBtn?.getAttribute('data-filter') || 'all';
+    renderFieldGuide(cat, term);
+  });
+
+  elements.clearGuideSearchBtn?.addEventListener('click', () => {
+    if (elements.guideSearchInput) elements.guideSearchInput.value = '';
+    elements.clearGuideSearchBtn?.classList.add('hidden');
+    const currentActiveFilterBtn = document.querySelector('.guide-filter-btn.bg-lime-500');
+    const cat = currentActiveFilterBtn?.getAttribute('data-filter') || 'all';
+    renderFieldGuide(cat, '');
+  });
+
   // Guide Category Filters
   document.querySelectorAll('.guide-filter-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       playSound('click');
       document.querySelectorAll('.guide-filter-btn').forEach(b => {
-        b.className = 'guide-filter-btn text-xs px-3 py-1 rounded-lg bg-slate-800 text-slate-300 font-brand hover:text-white active:scale-95 transition';
+        b.className = 'guide-filter-btn text-[10px] px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 font-brand hover:text-white flex-shrink-0 transition';
       });
-      e.currentTarget.className = 'guide-filter-btn text-xs px-3 py-1 rounded-lg bg-lime-500 text-slate-950 font-bold font-brand active:scale-95 transition';
+      e.currentTarget.className = 'guide-filter-btn text-[10px] px-2.5 py-1 rounded-lg bg-lime-500 text-slate-950 font-bold font-brand flex-shrink-0 transition';
       const filter = e.currentTarget.getAttribute('data-filter');
-      renderFieldGuide(filter);
+      const term = elements.guideSearchInput?.value.trim().toLowerCase() || '';
+      renderFieldGuide(filter, term);
     });
+  });
+
+  // Delegated click for Guide Bug cards & Investigate buttons
+  elements.guideModal?.addEventListener('click', (e) => {
+    const btn = e.target.closest('.guide-investigate-btn');
+    if (btn) {
+      const bugId = btn.getAttribute('data-bug-id');
+      investigateGuideBug(bugId);
+    }
+  });
+
+  // Reset Bingo
+  elements.resetBingoBtn?.addEventListener('click', () => {
+    playSound('click');
+    localStorage.removeItem('splatdex_bingo');
+    initBingoList();
+    showToast('Bingo card reset! Happy hunting!');
   });
 
   // Toggle API Key visibility
@@ -1795,47 +1863,249 @@ function renderForensicReport(data, source = 'cloud', fallbackReason = null) {
   elements.reportCard.scrollIntoView({ behavior: 'smooth' });
 }
 
-// --- FIELD GUIDE BROWSER (OFFLINE ENCYCLOPEDIA) ---
-function renderFieldGuide(category = 'all') {
-  if (!elements.guideBugList) return;
-  elements.guideBugList.innerHTML = '';
+// --- FIELD GUIDE TAB CONTROLLER ---
+function switchGuideTab(tab) {
+  playSound('click');
+  const tabs = [
+    { id: 'species', btn: elements.guideTabSpecies, sec: elements.guideSpeciesSection },
+    { id: 'handbook', btn: elements.guideTabHandbook, sec: elements.guideHandbookSection },
+    { id: 'cleanup', btn: elements.guideTabCleanup, sec: elements.guideCleanupSection },
+    { id: 'bingo', btn: elements.guideTabBingo, sec: elements.guideBingoSection }
+  ];
 
-  const filtered = category === 'all' 
-    ? OFFLINE_BUG_LIBRARY 
-    : OFFLINE_BUG_LIBRARY.filter(b => b.category === category);
+  tabs.forEach(t => {
+    const isActive = t.id === tab;
+    if (t.btn) {
+      t.btn.className = isActive 
+        ? 'guide-nav-tab py-1.5 rounded-lg font-bold bg-lime-500 text-slate-950 transition flex items-center justify-center gap-1 shadow'
+        : 'guide-nav-tab py-1.5 rounded-lg text-slate-300 hover:text-white transition flex items-center justify-center gap-1';
+    }
+    if (t.sec) {
+      t.sec.classList.toggle('hidden', !isActive);
+    }
+  });
+}
+
+// Helper: Color badges for guide cards
+function getGuideColorBadge(color) {
+  const map = {
+    green_brown: { text: "Green-Brown", cls: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" },
+    yellow: { text: "Yellow Pollen", cls: "bg-amber-500/20 text-amber-300 border-amber-500/30" },
+    red_black: { text: "Red-Black Chitin", cls: "bg-rose-500/20 text-rose-300 border-rose-500/30" },
+    dusty_grey: { text: "Dusty Scales", cls: "bg-slate-500/20 text-slate-300 border-slate-500/30" },
+    blue: { text: "Electric Blue", cls: "bg-sky-500/20 text-sky-300 border-sky-500/30" }
+  };
+  return map[color] || { text: color, cls: "bg-slate-700 text-slate-300 border-slate-600" };
+}
+
+// --- FIELD GUIDE BROWSER (OFFLINE ENCYCLOPEDIA) ---
+function renderFieldGuide(category = 'all', searchTerm = '') {
+  refreshElementReferences();
+  if (!elements.guideBugList) return;
+
+  const normalizedTerm = (searchTerm || '').toLowerCase();
+
+  // If cards are already in the DOM, filter visibility for speed & zero flicker
+  const existingCards = elements.guideBugList.querySelectorAll('.guide-bug-card');
+  if (existingCards.length > 0) {
+    let matchCount = 0;
+    existingCards.forEach(card => {
+      const cardCat = card.getAttribute('data-category');
+      const cardSearch = card.getAttribute('data-search') || '';
+
+      const categoryMatch = (category === 'all') || (cardCat === category);
+      const searchMatch = !normalizedTerm || cardSearch.includes(normalizedTerm);
+
+      if (categoryMatch && searchMatch) {
+        card.classList.remove('hidden');
+        matchCount++;
+      } else {
+        card.classList.add('hidden');
+      }
+    });
+
+    // Check for empty state
+    let emptyDiv = elements.guideBugList.querySelector('.guide-empty-state');
+    if (matchCount === 0) {
+      if (!emptyDiv) {
+        emptyDiv = document.createElement('div');
+        emptyDiv.className = 'guide-empty-state text-center p-6 bg-slate-900/60 border border-slate-800 rounded-xl space-y-2';
+        emptyDiv.innerHTML = `
+          <div class="text-3xl">🔍</div>
+          <p class="text-xs font-bold text-white font-brand">No Roadside Bugs Found</p>
+          <p class="text-[11px] text-slate-400">Try searching for "cicada", "yellow", "bee", or tap "All (16)".</p>
+        `;
+        elements.guideBugList.appendChild(emptyDiv);
+      }
+      emptyDiv.classList.remove('hidden');
+    } else if (emptyDiv) {
+      emptyDiv.classList.add('hidden');
+    }
+    return;
+  }
+
+  // Fallback: Build cards dynamically if DOM was not pre-populated
+  elements.guideBugList.innerHTML = '';
+  const filtered = OFFLINE_BUG_LIBRARY.filter(bug => {
+    const categoryMatch = (category === 'all') || (bug.category === category);
+    const textTarget = `${bug.bug_name} ${bug.scientific_name} ${bug.category} ${bug.color_profile}`.toLowerCase();
+    const searchMatch = !normalizedTerm || textTarget.includes(normalizedTerm);
+    return categoryMatch && searchMatch;
+  });
+
+  if (filtered.length === 0) {
+    elements.guideBugList.innerHTML = `
+      <div class="text-center p-6 bg-slate-900/60 border border-slate-800 rounded-xl space-y-2">
+        <div class="text-3xl">🔍</div>
+        <p class="text-xs font-bold text-white font-brand">No Roadside Bugs Found</p>
+        <p class="text-[11px] text-slate-400">Try another search term or select "All (16)".</p>
+      </div>
+    `;
+    return;
+  }
 
   filtered.forEach(bug => {
+    const cBadge = getGuideColorBadge(bug.color_profile);
     const card = document.createElement('div');
-    card.className = 'p-3 bg-slate-900/80 border border-slate-800 rounded-xl space-y-2 hover:border-slate-700 transition cursor-pointer active:scale-[0.99]';
+    card.className = 'guide-bug-card p-3 bg-slate-900/90 border border-slate-800 rounded-xl space-y-2 hover:border-slate-700 transition';
+    card.setAttribute('data-bug-id', bug.id);
+    card.setAttribute('data-category', bug.category);
+    card.setAttribute('data-search', `${bug.bug_name.toLowerCase()} ${bug.scientific_name.toLowerCase()} ${bug.category} ${bug.color_profile.replace("_", " ")}`);
+
+    const factsHtml = bug.bug_facts.map((f, i) => `
+      <li class="flex items-start gap-1.5 text-[10px] text-slate-300">
+        <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[8px] flex items-center justify-center flex-shrink-0 mt-0.5">${i + 1}</span>
+        <span class="leading-relaxed">${f}</span>
+      </li>
+    `).join("");
+
     card.innerHTML = `
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2.5">
           <span class="text-2xl">${bug.emoji}</span>
           <div>
             <h4 class="text-xs font-bold text-white font-brand">${bug.bug_name}</h4>
-            <p class="text-[10px] italic text-slate-400">${bug.scientific_name}</p>
+            <p class="text-[10px] italic text-slate-400 font-serif">${bug.scientific_name}</p>
           </div>
         </div>
-        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-lime-400 border border-slate-700">
-          ${bug.color_profile.replace('_', ' ')}
+        <span class="text-[9px] font-semibold px-2 py-0.5 rounded-full border ${cBadge.cls}">
+          ${cBadge.text}
         </span>
       </div>
-      <p class="text-[11px] text-slate-300 italic">"${bug.eulogy}"</p>
-      <div class="bg-slate-950/60 p-2 rounded-lg text-[10px] text-emerald-300 flex items-center gap-1.5">
-        <span>🧽</span> <span>${bug.windscreen_cleanup_tip}</span>
+      <p class="text-[11px] text-amber-200/90 italic bg-amber-500/10 border-l-2 border-amber-400 p-1.5 rounded-r font-serif">"${bug.eulogy}"</p>
+      <div class="bg-slate-950/70 p-2 rounded-lg border border-slate-800/80">
+        <h5 class="text-[9px] uppercase font-bold text-lime-400 tracking-wider mb-1 flex items-center gap-1">
+          <span>🧠</span> Road-Trip Bug Clues
+        </h5>
+        <ul class="space-y-1">
+          ${factsHtml}
+        </ul>
       </div>
+      <div class="bg-sky-950/30 border border-sky-800/40 p-1.5 rounded-lg flex items-start gap-1.5 text-[10px] text-sky-200">
+        <span>🧽</span>
+        <div>
+          <span class="font-bold text-sky-300">Clean:</span>
+          <span>${bug.windscreen_cleanup_tip}</span>
+        </div>
+      </div>
+      <button type="button" class="guide-investigate-btn w-full py-1.5 px-3 rounded-lg bg-slate-800 hover:bg-lime-500/20 border border-slate-700 hover:border-lime-500/40 text-slate-200 hover:text-lime-300 text-xs font-brand font-semibold transition flex items-center justify-center gap-1.5 active:scale-98" data-bug-id="${bug.id}">
+        <span>🔬</span> Load as Specimen & Scan
+      </button>
     `;
-
-    // Clicking a guide item previews it in the dossier
-    card.addEventListener('click', () => {
-      playSound('click');
-      elements.guideModal.classList.add('hidden');
-      renderForensicReport(bug, 'offline', 'Browsed from Field Guide');
-      showToast(`Viewing: ${bug.bug_name}`);
-    });
-
     elements.guideBugList.appendChild(card);
   });
+}
+
+function drawSplatterForBug(ctx, w, h, bug) {
+  let dark = "#15803d", light = "#84cc16";
+  if (bug.color_profile === "yellow") {
+    dark = "#b45309"; light = "#facc15";
+  } else if (bug.color_profile === "red_black") {
+    dark = "#881337"; light = "#fb7185";
+  } else if (bug.color_profile === "dusty_grey") {
+    dark = "#334155"; light = "#94a3b8";
+  } else if (bug.color_profile === "blue") {
+    dark = "#0369a1"; light = "#38bdf8";
+  }
+  drawSplatter(ctx, w / 2, h / 2, 45, dark, light, 18);
+}
+
+// Investigate Specimen from Field Guide
+function investigateGuideBug(bugId) {
+  if (!bugId) return;
+  const chosenBug = OFFLINE_BUG_LIBRARY.find(b => b.id === bugId);
+  if (!chosenBug) return;
+
+  playSound('click');
+  elements.guideModal?.classList.add('hidden');
+
+  // Set as current specimen
+  const canvas = elements.splatterCanvas;
+  if (canvas) {
+    const ctx = canvas.getContext('2d');
+    canvas.width = 400;
+    canvas.height = 300;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawSplatterForBug(ctx, canvas.width, canvas.height, chosenBug);
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+    state.currentImageBase64 = dataUrl.split(",")[1];
+    state.currentImageMime = "image/jpeg";
+
+    elements.imagePreview?.classList.add('hidden');
+    elements.emptyPreviewPlaceholder?.classList.add('hidden');
+    elements.splatterCanvas?.classList.remove('hidden');
+    if (elements.specimenBadge) {
+      elements.specimenBadge.textContent = `${chosenBug.bug_name} (Loaded)`;
+      elements.specimenBadge.className = "text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full bg-lime-500/20 text-lime-400 border border-lime-500/30";
+    }
+  }
+
+  // If crash-cam is enabled, trigger the fun impact animation!
+  if (state.playCrashCam && typeof playCrashCamAnimation === 'function') {
+    playCrashCamAnimation(chosenBug);
+  }
+
+  renderForensicReport(chosenBug, 'offline', `Investigated from Field Guide: ${chosenBug.bug_name}`);
+  showToast(`Loaded ${chosenBug.bug_name} into Forensic Lab!`);
+}
+
+// Initialize Road-Trip Bingo Checklist
+function initBingoList() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('splatdex_bingo') || '{}');
+    document.querySelectorAll('.bingo-checkbox').forEach(cb => {
+      const id = cb.getAttribute('data-bingo-id');
+      cb.checked = !!saved[id];
+      cb.onchange = () => {
+        playSound('click');
+        saved[id] = cb.checked;
+        localStorage.setItem('splatdex_bingo', JSON.stringify(saved));
+        const count = Object.values(saved).filter(Boolean).length;
+        showToast(`Bingo Progress: ${count} of 16 Spotted! 🎯`);
+      };
+    });
+  } catch (err) {
+    console.error("Bingo load error", err);
+  }
+}
+
+function refreshElementReferences() {
+  elements.openGuideBtn = document.getElementById('openGuideBtn');
+  elements.closeGuideBtn = document.getElementById('closeGuideBtn');
+  elements.guideModal = document.getElementById('guideModal');
+  elements.guideBugList = document.getElementById('guideBugList');
+  elements.guideSearchInput = document.getElementById('guideSearchInput');
+  elements.clearGuideSearchBtn = document.getElementById('clearGuideSearchBtn');
+  elements.guideTabSpecies = document.getElementById('guideTabSpecies');
+  elements.guideTabHandbook = document.getElementById('guideTabHandbook');
+  elements.guideTabCleanup = document.getElementById('guideTabCleanup');
+  elements.guideTabBingo = document.getElementById('guideTabBingo');
+  elements.guideSpeciesSection = document.getElementById('guideSpeciesSection');
+  elements.guideHandbookSection = document.getElementById('guideHandbookSection');
+  elements.guideCleanupSection = document.getElementById('guideCleanupSection');
+  elements.guideBingoSection = document.getElementById('guideBingoSection');
+  elements.bingoListContainer = document.getElementById('bingoListContainer');
+  elements.resetBingoBtn = document.getElementById('resetBingoBtn');
 }
 
 // --- FIELD JOURNAL / LOCAL STORAGE ---
@@ -1931,4 +2201,8 @@ async function handleShareReport() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', init);
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}

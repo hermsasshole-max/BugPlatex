@@ -7,13 +7,19 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
+import android.view.View
+import android.webkit.ConsoleMessage
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -22,6 +28,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
@@ -85,7 +95,7 @@ class MainActivity : ComponentActivity() {
             pendingCameraUri = photoUri
             takePictureLauncher.launch(photoUri)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("SplatDexNative", "Failed to launch camera", e)
             filePathCallback?.onReceiveValue(null)
             filePathCallback = null
             pendingCameraUri = null
@@ -99,7 +109,7 @@ class MainActivity : ComponentActivity() {
             }
             filePickerLauncher.launch(intent)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("SplatDexNative", "Failed to launch gallery picker", e)
             filePathCallback?.onReceiveValue(null)
             filePathCallback = null
         }
@@ -158,6 +168,12 @@ fun SplatDexWebView(
     onOpenFileChooser: (ValueCallback<Array<Uri>>?, WebChromeClient.FileChooserParams?) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var webViewInstance by remember { mutableStateOf<WebView?>(null) }
+
+    BackHandler(enabled = webViewInstance?.canGoBack() == true) {
+        webViewInstance?.goBack()
+    }
+
     AndroidView(
         modifier = modifier
             .fillMaxSize()
@@ -165,6 +181,8 @@ fun SplatDexWebView(
         factory = { context ->
             WebView(context).apply {
                 setBackgroundColor(0xFF0F172A.toInt())
+                setLayerType(View.LAYER_TYPE_HARDWARE, null)
+
                 settings.apply {
                     javaScriptEnabled = true
                     domStorageEnabled = true
@@ -174,6 +192,9 @@ fun SplatDexWebView(
                     cacheMode = WebSettings.LOAD_DEFAULT
                     useWideViewPort = true
                     loadWithOverviewMode = true
+                    displayZoomControls = false
+                    builtInZoomControls = false
+                    setSupportZoom(false)
                 }
 
                 webViewClient = object : WebViewClient() {
@@ -181,7 +202,41 @@ fun SplatDexWebView(
                         view: WebView?,
                         request: WebResourceRequest?
                     ): Boolean {
-                        return false
+                        val url = request?.url?.toString() ?: return false
+                        if (url.startsWith("file://") || url.startsWith("data:")) {
+                            return false
+                        }
+                        try {
+                            val intent = Intent(Intent.ACTION_VIEW, request.url)
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            Log.e("SplatDexWebView", "Unable to open url: $url", e)
+                        }
+                        return true
+                    }
+
+                    override fun onReceivedError(
+                        view: WebView?,
+                        request: WebResourceRequest?,
+                        error: WebResourceError?
+                    ) {
+                        super.onReceivedError(view, request, error)
+                        Log.w(
+                            "SplatDexWebView",
+                            "Resource error: ${error?.description} (${error?.errorCode}) for ${request?.url}"
+                        )
+                    }
+
+                    override fun onReceivedHttpError(
+                        view: WebView?,
+                        request: WebResourceRequest?,
+                        errorResponse: WebResourceResponse?
+                    ) {
+                        super.onReceivedHttpError(view, request, errorResponse)
+                        Log.w(
+                            "SplatDexWebView",
+                            "HTTP error ${errorResponse?.statusCode} for ${request?.url}"
+                        )
                     }
                 }
 
@@ -194,9 +249,20 @@ fun SplatDexWebView(
                         onOpenFileChooser(filePathCallback, fileChooserParams)
                         return true
                     }
+
+                    override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
+                        consoleMessage?.let {
+                            Log.d(
+                                "SplatDexJS",
+                                "[${it.messageLevel()}] ${it.message()} (${it.sourceId()}:${it.lineNumber()})"
+                            )
+                        }
+                        return true
+                    }
                 }
 
                 loadUrl("file:///android_asset/www/index.html")
+                webViewInstance = this
             }
         }
     )

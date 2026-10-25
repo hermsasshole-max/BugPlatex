@@ -215,35 +215,1440 @@
       </div>
     </div>
 
-    <!-- FIELD GUIDE ENCYCLOPEDIA MODAL (OFFLINE LIBRARY BROWSER) -->
+
+    <!-- FIELD GUIDE ENCYCLOPEDIA MODAL (OFFLINE ROAD-TRIP LIBRARY & MANUAL) -->
     <div id="guideModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3">
-      <div class="bg-splat-card border border-splat-border rounded-2xl w-full max-w-lg max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="bg-splat-card border border-splat-border rounded-2xl w-full max-w-lg max-h-[88vh] flex flex-col shadow-2xl overflow-hidden">
         <!-- Header -->
-        <div class="p-4 border-b border-splat-border flex items-center justify-between bg-slate-900/60">
+        <div class="p-3.5 border-b border-splat-border flex items-center justify-between bg-slate-900/80">
           <div class="flex items-center space-x-2.5">
             <span class="text-2xl">📖</span>
             <div>
-              <h3 class="text-base font-bold font-brand text-white">SplatDex Roadside Field Guide</h3>
-              <p class="text-[11px] text-lime-400 font-medium">16 Common Windshield Splatter Species (100% Offline)</p>
+              <h3 class="text-sm sm:text-base font-bold font-brand text-white leading-tight">SplatDex Roadside Field Guide</h3>
+              <p class="text-[10px] sm:text-[11px] text-lime-400 font-medium">16 Highway Species • Forensics • Cleaning Hacks</p>
             </div>
           </div>
-          <button id="closeGuideBtn" class="text-slate-400 hover:text-white p-1 text-lg">✕</button>
+          <button id="closeGuideBtn" class="text-slate-400 hover:text-white p-1 text-lg rounded-lg hover:bg-slate-800 transition">✕</button>
         </div>
 
-        <!-- Category Filters -->
-        <div class="p-3 bg-slate-950/70 border-b border-slate-800 flex items-center gap-1.5 overflow-x-auto custom-scrollbar">
-          <button data-filter="all" class="guide-filter-btn text-xs px-3 py-1 rounded-lg bg-lime-500 text-slate-950 font-bold font-brand active:scale-95 transition">All Bugs</button>
-          <button data-filter="chunky" class="guide-filter-btn text-xs px-3 py-1 rounded-lg bg-slate-800 text-slate-300 font-brand hover:text-white active:scale-95 transition">Chunky Crunchers</button>
-          <button data-filter="sticky" class="guide-filter-btn text-xs px-3 py-1 rounded-lg bg-slate-800 text-slate-300 font-brand hover:text-white active:scale-95 transition">Yellow Pollen</button>
-          <button data-filter="winged" class="guide-filter-btn text-xs px-3 py-1 rounded-lg bg-slate-800 text-slate-300 font-brand hover:text-white active:scale-95 transition">Winged Flyers</button>
+        <!-- Navigation Tabs -->
+        <div class="grid grid-cols-4 bg-slate-950/80 border-b border-slate-800 p-1 gap-1 text-[11px] font-brand">
+          <button id="guideTabSpecies" class="guide-nav-tab py-1.5 rounded-lg font-bold bg-lime-500 text-slate-950 transition flex items-center justify-center gap-1">
+            <span>🪲</span> Species
+          </button>
+          <button id="guideTabHandbook" class="guide-nav-tab py-1.5 rounded-lg text-slate-300 hover:text-white transition flex items-center justify-center gap-1">
+            <span>🕵️</span> Manual
+          </button>
+          <button id="guideTabCleanup" class="guide-nav-tab py-1.5 rounded-lg text-slate-300 hover:text-white transition flex items-center justify-center gap-1">
+            <span>🧽</span> Cleaning
+          </button>
+          <button id="guideTabBingo" class="guide-nav-tab py-1.5 rounded-lg text-slate-300 hover:text-white transition flex items-center justify-center gap-1">
+            <span>🎯</span> Bingo
+          </button>
         </div>
 
-        <!-- Bug Cards Grid -->
-        <div id="guideBugList" class="p-4 overflow-y-auto custom-scrollbar space-y-3 flex-1">
-          <!-- Dynamically populated from OFFLINE_BUG_LIBRARY -->
+        <!-- TAB 1: SPECIES VIEW -->
+        <div id="guideSpeciesSection" class="flex flex-col flex-1 overflow-hidden">
+          <!-- Search & Filter Controls -->
+          <div class="p-2.5 bg-slate-900/50 border-b border-slate-800 space-y-2">
+            <!-- Search Input -->
+            <div class="relative">
+              <input type="text" id="guideSearchInput" placeholder="🔍 Search bug by name, fluid color, or category..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-lime-500">
+              <button id="clearGuideSearchBtn" class="hidden absolute right-2.5 top-1.5 text-xs text-slate-400 hover:text-white">✕</button>
+            </div>
+            <!-- Category Chips -->
+            <div class="flex items-center gap-1 overflow-x-auto custom-scrollbar pb-0.5">
+              <button data-filter="all" class="guide-filter-btn text-[10px] px-2.5 py-1 rounded-lg bg-lime-500 text-slate-950 font-bold font-brand flex-shrink-0 transition">All (16)</button>
+              <button data-filter="chunky" class="guide-filter-btn text-[10px] px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 font-brand hover:text-white flex-shrink-0 transition">🪲 Chunky</button>
+              <button data-filter="sticky" class="guide-filter-btn text-[10px] px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 font-brand hover:text-white flex-shrink-0 transition">🐝 Pollen</button>
+              <button data-filter="winged" class="guide-filter-btn text-[10px] px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 font-brand hover:text-white flex-shrink-0 transition">🪰 Winged</button>
+            </div>
+          </div>
+
+          <!-- Bug Cards Grid -->
+          <div id="guideBugList" class="p-3 overflow-y-auto custom-scrollbar space-y-3 flex-1">
+            
+    <div class="guide-bug-card p-3 bg-slate-900/90 border border-slate-800 rounded-xl space-y-2 hover:border-slate-700 transition" 
+         data-bug-id="june_beetle" 
+         data-category="chunky" 
+         data-search="general june beetle phyllophaga spp. chunky green brown">
+      
+      <div class="flex items-start justify-between gap-2">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-center text-2xl shadow-inner flex-shrink-0">
+            🪲
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-white font-brand">General June Beetle</h4>
+            <p class="text-[10px] italic text-slate-400 font-serif">Phyllophaga spp.</p>
+          </div>
+        </div>
+        <div class="flex flex-col items-end gap-1">
+          <span class="text-[9px] font-semibold px-2 py-0.5 rounded-full border bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+            Green-Brown Fluids
+          </span>
+          <span class="text-[8px] font-semibold uppercase tracking-wider px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 border border-slate-700">
+            Chunky Cruncher
+          </span>
+        </div>
+      </div>
+
+      <p class="text-[11px] text-amber-200/90 italic bg-amber-500/10 border-l-2 border-amber-400 p-1.5 rounded-r font-serif">
+        "A brave, chunky aviator whose armored carapace met 70 MPH minivan aerodynamics."
+      </p>
+
+      <div class="bg-slate-950/70 p-2 rounded-lg border border-slate-800/80">
+        <h5 class="text-[9px] uppercase font-bold text-lime-400 tracking-wider mb-1 flex items-center gap-1">
+          <span>🧠</span> Road-Trip Bug Clues
+        </h5>
+        <ul class="space-y-1">
+          
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+      <span class="leading-relaxed">June bugs are notoriously terrible pilots and fly like tiny blimps with no steering wheel.</span>
+    </li>
+  
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+      <span class="leading-relaxed">Their thick exoskeletons are made of chitin, the same tough material in lobster and crab claws!</span>
+    </li>
+  
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+      <span class="leading-relaxed">Most June bugs spend 2 to 3 years underground as grubs before flying for just a few weeks.</span>
+    </li>
+  
+        </ul>
+      </div>
+
+      <div class="bg-sky-950/30 border border-sky-800/40 p-1.5 rounded-lg flex items-start gap-1.5 text-[10px] text-sky-200">
+        <span>🧽</span>
+        <div>
+          <span class="font-bold text-sky-300">Clean:</span>
+          <span>Soak the dried chitin with warm soapy water for 3 minutes before wiping to prevent windshield scratches!</span>
+        </div>
+      </div>
+
+      <button type="button" 
+              class="guide-investigate-btn w-full py-1.5 px-3 rounded-lg bg-slate-800 hover:bg-lime-500/20 border border-slate-700 hover:border-lime-500/40 text-slate-200 hover:text-lime-300 text-xs font-brand font-semibold transition flex items-center justify-center gap-1.5 active:scale-98"
+              data-bug-id="june_beetle">
+        <span>🔬</span> Load as Specimen & Scan
+      </button>
+    </div>
+  
+    <div class="guide-bug-card p-3 bg-slate-900/90 border border-slate-800 rounded-xl space-y-2 hover:border-slate-700 transition" 
+         data-bug-id="lovebug" 
+         data-category="winged" 
+         data-search="lovebug road-trip duo plecia nearctica winged red black">
+      
+      <div class="flex items-start justify-between gap-2">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-center text-2xl shadow-inner flex-shrink-0">
+            ❤️
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-white font-brand">Lovebug Road-Trip Duo</h4>
+            <p class="text-[10px] italic text-slate-400 font-serif">Plecia nearctica</p>
+          </div>
+        </div>
+        <div class="flex flex-col items-end gap-1">
+          <span class="text-[9px] font-semibold px-2 py-0.5 rounded-full border bg-rose-500/20 text-rose-300 border-rose-500/30">
+            Red-Black Chitin
+          </span>
+          <span class="text-[8px] font-semibold uppercase tracking-wider px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 border border-slate-700">
+            Winged Flyer
+          </span>
+        </div>
+      </div>
+
+      <p class="text-[11px] text-amber-200/90 italic bg-amber-500/10 border-l-2 border-amber-400 p-1.5 rounded-r font-serif">
+        "United in life and united on the windshield glass forever."
+      </p>
+
+      <div class="bg-slate-950/70 p-2 rounded-lg border border-slate-800/80">
+        <h5 class="text-[9px] uppercase font-bold text-lime-400 tracking-wider mb-1 flex items-center gap-1">
+          <span>🧠</span> Road-Trip Bug Clues
+        </h5>
+        <ul class="space-y-1">
+          
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+      <span class="leading-relaxed">Lovebugs fly in glued-together pairs during May and September across southern highways.</span>
+    </li>
+  
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+      <span class="leading-relaxed">Their body fluids are mildly acidic and will bake into automotive clear coat under hot sunshine!</span>
+    </li>
+  
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+      <span class="leading-relaxed">They are attracted to hot highway asphalt, engine fumes, and the smell of decomposing grass.</span>
+    </li>
+  
+        </ul>
+      </div>
+
+      <div class="bg-sky-950/30 border border-sky-800/40 p-1.5 rounded-lg flex items-start gap-1.5 text-[10px] text-sky-200">
+        <span>🧽</span>
+        <div>
+          <span class="font-bold text-sky-300">Clean:</span>
+          <span>Clean immediately with a wet dryer sheet or baking soda paste — never let lovebug juice bake in the sun!</span>
+        </div>
+      </div>
+
+      <button type="button" 
+              class="guide-investigate-btn w-full py-1.5 px-3 rounded-lg bg-slate-800 hover:bg-lime-500/20 border border-slate-700 hover:border-lime-500/40 text-slate-200 hover:text-lime-300 text-xs font-brand font-semibold transition flex items-center justify-center gap-1.5 active:scale-98"
+              data-bug-id="lovebug">
+        <span>🔬</span> Load as Specimen & Scan
+      </button>
+    </div>
+  
+    <div class="guide-bug-card p-3 bg-slate-900/90 border border-slate-800 rounded-xl space-y-2 hover:border-slate-700 transition" 
+         data-bug-id="honeybee" 
+         data-category="sticky" 
+         data-search="golden honeybee apis mellifera sticky yellow">
+      
+      <div class="flex items-start justify-between gap-2">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-center text-2xl shadow-inner flex-shrink-0">
+            🐝
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-white font-brand">Golden Honeybee</h4>
+            <p class="text-[10px] italic text-slate-400 font-serif">Apis mellifera</p>
+          </div>
+        </div>
+        <div class="flex flex-col items-end gap-1">
+          <span class="text-[9px] font-semibold px-2 py-0.5 rounded-full border bg-amber-500/20 text-amber-300 border-amber-500/30">
+            Yellow Pollen Gloop
+          </span>
+          <span class="text-[8px] font-semibold uppercase tracking-wider px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 border border-slate-700">
+            Sticky Pollen
+          </span>
+        </div>
+      </div>
+
+      <p class="text-[11px] text-amber-200/90 italic bg-amber-500/10 border-l-2 border-amber-400 p-1.5 rounded-r font-serif">
+        "A sweet pollen collector on her final highway nectar patrol. Rest in wildflower peace."
+      </p>
+
+      <div class="bg-slate-950/70 p-2 rounded-lg border border-slate-800/80">
+        <h5 class="text-[9px] uppercase font-bold text-lime-400 tracking-wider mb-1 flex items-center gap-1">
+          <span>🧠</span> Road-Trip Bug Clues
+        </h5>
+        <ul class="space-y-1">
+          
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+      <span class="leading-relaxed">The yellow splatter stain is actually pure floral pollen harvested by the bee's hairy hind legs!</span>
+    </li>
+  
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+      <span class="leading-relaxed">A worker honeybee visits over 2,000 flowers in a single busy summer day.</span>
+    </li>
+  
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+      <span class="leading-relaxed">Honeybees flap their wings 200 times every second, creating their famous buzzing sound.</span>
+    </li>
+  
+        </ul>
+      </div>
+
+      <div class="bg-sky-950/30 border border-sky-800/40 p-1.5 rounded-lg flex items-start gap-1.5 text-[10px] text-sky-200">
+        <span>🧽</span>
+        <div>
+          <span class="font-bold text-sky-300">Clean:</span>
+          <span>Yellow pollen residue dissolves fast with a 50/50 mix of white vinegar and water.</span>
+        </div>
+      </div>
+
+      <button type="button" 
+              class="guide-investigate-btn w-full py-1.5 px-3 rounded-lg bg-slate-800 hover:bg-lime-500/20 border border-slate-700 hover:border-lime-500/40 text-slate-200 hover:text-lime-300 text-xs font-brand font-semibold transition flex items-center justify-center gap-1.5 active:scale-98"
+              data-bug-id="honeybee">
+        <span>🔬</span> Load as Specimen & Scan
+      </button>
+    </div>
+  
+    <div class="guide-bug-card p-3 bg-slate-900/90 border border-slate-800 rounded-xl space-y-2 hover:border-slate-700 transition" 
+         data-bug-id="moth" 
+         data-category="winged" 
+         data-search="velvet highway moth lymantria dispar winged dusty grey">
+      
+      <div class="flex items-start justify-between gap-2">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-center text-2xl shadow-inner flex-shrink-0">
+            🦋
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-white font-brand">Velvet Highway Moth</h4>
+            <p class="text-[10px] italic text-slate-400 font-serif">Lymantria dispar</p>
+          </div>
+        </div>
+        <div class="flex flex-col items-end gap-1">
+          <span class="text-[9px] font-semibold px-2 py-0.5 rounded-full border bg-slate-500/20 text-slate-300 border-slate-500/30">
+            Dusty Grey Scales
+          </span>
+          <span class="text-[8px] font-semibold uppercase tracking-wider px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 border border-slate-700">
+            Winged Flyer
+          </span>
+        </div>
+      </div>
+
+      <p class="text-[11px] text-amber-200/90 italic bg-amber-500/10 border-l-2 border-amber-400 p-1.5 rounded-r font-serif">
+        "It followed the brightest light on Interstate 80 all the way to the glass."
+      </p>
+
+      <div class="bg-slate-950/70 p-2 rounded-lg border border-slate-800/80">
+        <h5 class="text-[9px] uppercase font-bold text-lime-400 tracking-wider mb-1 flex items-center gap-1">
+          <span>🧠</span> Road-Trip Bug Clues
+        </h5>
+        <ul class="space-y-1">
+          
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+      <span class="leading-relaxed">The chalky grey smudge comes from thousands of microscopic powdery scales covering their wings.</span>
+    </li>
+  
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+      <span class="leading-relaxed">Moths navigate using the light of the moon, which is why headlights completely confuse them!</span>
+    </li>
+  
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+      <span class="leading-relaxed">Some moths have fake owl-eyes painted on their wings to scare off bats and birds.</span>
+    </li>
+  
+        </ul>
+      </div>
+
+      <div class="bg-sky-950/30 border border-sky-800/40 p-1.5 rounded-lg flex items-start gap-1.5 text-[10px] text-sky-200">
+        <span>🧽</span>
+        <div>
+          <span class="font-bold text-sky-300">Clean:</span>
+          <span>Wipe with a dry microfiber cloth first to remove dusty scales, then spray windshield washer fluid.</span>
+        </div>
+      </div>
+
+      <button type="button" 
+              class="guide-investigate-btn w-full py-1.5 px-3 rounded-lg bg-slate-800 hover:bg-lime-500/20 border border-slate-700 hover:border-lime-500/40 text-slate-200 hover:text-lime-300 text-xs font-brand font-semibold transition flex items-center justify-center gap-1.5 active:scale-98"
+              data-bug-id="moth">
+        <span>🔬</span> Load as Specimen & Scan
+      </button>
+    </div>
+  
+    <div class="guide-bug-card p-3 bg-slate-900/90 border border-slate-800 rounded-xl space-y-2 hover:border-slate-700 transition" 
+         data-bug-id="dragonfly" 
+         data-category="winged" 
+         data-search="electric blue dragonfly pachydiplax longipennis winged blue">
+      
+      <div class="flex items-start justify-between gap-2">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-center text-2xl shadow-inner flex-shrink-0">
+            ⚡
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-white font-brand">Electric Blue Dragonfly</h4>
+            <p class="text-[10px] italic text-slate-400 font-serif">Pachydiplax longipennis</p>
+          </div>
+        </div>
+        <div class="flex flex-col items-end gap-1">
+          <span class="text-[9px] font-semibold px-2 py-0.5 rounded-full border bg-sky-500/20 text-sky-300 border-sky-500/30">
+            Electric Blue Sheen
+          </span>
+          <span class="text-[8px] font-semibold uppercase tracking-wider px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 border border-slate-700">
+            Winged Flyer
+          </span>
+        </div>
+      </div>
+
+      <p class="text-[11px] text-amber-200/90 italic bg-amber-500/10 border-l-2 border-amber-400 p-1.5 rounded-r font-serif">
+        "The undisputed stunt pilot of the pond, outmaneuvered only by tempered glass."
+      </p>
+
+      <div class="bg-slate-950/70 p-2 rounded-lg border border-slate-800/80">
+        <h5 class="text-[9px] uppercase font-bold text-lime-400 tracking-wider mb-1 flex items-center gap-1">
+          <span>🧠</span> Road-Trip Bug Clues
+        </h5>
+        <ul class="space-y-1">
+          
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+      <span class="leading-relaxed">Dragonflies can fly backwards, upside down, and hover completely still in mid-air!</span>
+    </li>
+  
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+      <span class="leading-relaxed">They have 30,000 lenses in each eye, giving them nearly 360-degree vision around them.</span>
+    </li>
+  
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+      <span class="leading-relaxed">Dragonflies are among the most successful predators in nature, catching 95% of their targeted prey.</span>
+    </li>
+  
+        </ul>
+      </div>
+
+      <div class="bg-sky-950/30 border border-sky-800/40 p-1.5 rounded-lg flex items-start gap-1.5 text-[10px] text-sky-200">
+        <span>🧽</span>
+        <div>
+          <span class="font-bold text-sky-300">Clean:</span>
+          <span>The thin translucent fluid clears easily with regular wiper fluid and fresh wiper blades.</span>
+        </div>
+      </div>
+
+      <button type="button" 
+              class="guide-investigate-btn w-full py-1.5 px-3 rounded-lg bg-slate-800 hover:bg-lime-500/20 border border-slate-700 hover:border-lime-500/40 text-slate-200 hover:text-lime-300 text-xs font-brand font-semibold transition flex items-center justify-center gap-1.5 active:scale-98"
+              data-bug-id="dragonfly">
+        <span>🔬</span> Load as Specimen & Scan
+      </button>
+    </div>
+  
+    <div class="guide-bug-card p-3 bg-slate-900/90 border border-slate-800 rounded-xl space-y-2 hover:border-slate-700 transition" 
+         data-bug-id="cicada" 
+         data-category="chunky" 
+         data-search="dog-day screaming cicada neotibicen canicularis chunky green brown">
+      
+      <div class="flex items-start justify-between gap-2">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-center text-2xl shadow-inner flex-shrink-0">
+            📢
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-white font-brand">Dog-Day Screaming Cicada</h4>
+            <p class="text-[10px] italic text-slate-400 font-serif">Neotibicen canicularis</p>
+          </div>
+        </div>
+        <div class="flex flex-col items-end gap-1">
+          <span class="text-[9px] font-semibold px-2 py-0.5 rounded-full border bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+            Green-Brown Fluids
+          </span>
+          <span class="text-[8px] font-semibold uppercase tracking-wider px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 border border-slate-700">
+            Chunky Cruncher
+          </span>
+        </div>
+      </div>
+
+      <p class="text-[11px] text-amber-200/90 italic bg-amber-500/10 border-l-2 border-amber-400 p-1.5 rounded-r font-serif">
+        "Spent 17 quiet years underground only to meet our SUV at mile marker 42."
+      </p>
+
+      <div class="bg-slate-950/70 p-2 rounded-lg border border-slate-800/80">
+        <h5 class="text-[9px] uppercase font-bold text-lime-400 tracking-wider mb-1 flex items-center gap-1">
+          <span>🧠</span> Road-Trip Bug Clues
+        </h5>
+        <ul class="space-y-1">
+          
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+      <span class="leading-relaxed">A swarm of male cicadas singing together can reach 100 decibels — as loud as a lawn mower!</span>
+    </li>
+  
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+      <span class="leading-relaxed">Cicadas possess three tiny extra eyes called ocelli on the top of their heads.</span>
+    </li>
+  
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+      <span class="leading-relaxed">Their massive splatter imprint leaves unmistakable diamond-patterned wing vein impressions.</span>
+    </li>
+  
+        </ul>
+      </div>
+
+      <div class="bg-sky-950/30 border border-sky-800/40 p-1.5 rounded-lg flex items-start gap-1.5 text-[10px] text-sky-200">
+        <span>🧽</span>
+        <div>
+          <span class="font-bold text-sky-300">Clean:</span>
+          <span>Use warm water and car wash soap to loosen the heavy grease before turning on wipers.</span>
+        </div>
+      </div>
+
+      <button type="button" 
+              class="guide-investigate-btn w-full py-1.5 px-3 rounded-lg bg-slate-800 hover:bg-lime-500/20 border border-slate-700 hover:border-lime-500/40 text-slate-200 hover:text-lime-300 text-xs font-brand font-semibold transition flex items-center justify-center gap-1.5 active:scale-98"
+              data-bug-id="cicada">
+        <span>🔬</span> Load as Specimen & Scan
+      </button>
+    </div>
+  
+    <div class="guide-bug-card p-3 bg-slate-900/90 border border-slate-800 rounded-xl space-y-2 hover:border-slate-700 transition" 
+         data-bug-id="green_bottle_fly" 
+         data-category="winged" 
+         data-search="emerald bottle fly lucilia sericata winged green brown">
+      
+      <div class="flex items-start justify-between gap-2">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-center text-2xl shadow-inner flex-shrink-0">
+            🪰
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-white font-brand">Emerald Bottle Fly</h4>
+            <p class="text-[10px] italic text-slate-400 font-serif">Lucilia sericata</p>
+          </div>
+        </div>
+        <div class="flex flex-col items-end gap-1">
+          <span class="text-[9px] font-semibold px-2 py-0.5 rounded-full border bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+            Green-Brown Fluids
+          </span>
+          <span class="text-[8px] font-semibold uppercase tracking-wider px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 border border-slate-700">
+            Winged Flyer
+          </span>
+        </div>
+      </div>
+
+      <p class="text-[11px] text-amber-200/90 italic bg-amber-500/10 border-l-2 border-amber-400 p-1.5 rounded-r font-serif">
+        "Shiny as a jewel, quick as lightning, flattened like a pancake."
+      </p>
+
+      <div class="bg-slate-950/70 p-2 rounded-lg border border-slate-800/80">
+        <h5 class="text-[9px] uppercase font-bold text-lime-400 tracking-wider mb-1 flex items-center gap-1">
+          <span>🧠</span> Road-Trip Bug Clues
+        </h5>
+        <ul class="space-y-1">
+          
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+      <span class="leading-relaxed">That metallic shine isn't paint — it's light reflecting off microscopic microscopic grooves in their armor!</span>
+    </li>
+  
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+      <span class="leading-relaxed">Bottle flies taste food through special sensor receptors on their feet.</span>
+    </li>
+  
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+      <span class="leading-relaxed">Their wings flap over 300 times per second, giving them supreme agility.</span>
+    </li>
+  
+        </ul>
+      </div>
+
+      <div class="bg-sky-950/30 border border-sky-800/40 p-1.5 rounded-lg flex items-start gap-1.5 text-[10px] text-sky-200">
+        <span>🧽</span>
+        <div>
+          <span class="font-bold text-sky-300">Clean:</span>
+          <span>A quick spray of standard blue windshield washer fluid wipes this clean instantly.</span>
+        </div>
+      </div>
+
+      <button type="button" 
+              class="guide-investigate-btn w-full py-1.5 px-3 rounded-lg bg-slate-800 hover:bg-lime-500/20 border border-slate-700 hover:border-lime-500/40 text-slate-200 hover:text-lime-300 text-xs font-brand font-semibold transition flex items-center justify-center gap-1.5 active:scale-98"
+              data-bug-id="green_bottle_fly">
+        <span>🔬</span> Load as Specimen & Scan
+      </button>
+    </div>
+  
+    <div class="guide-bug-card p-3 bg-slate-900/90 border border-slate-800 rounded-xl space-y-2 hover:border-slate-700 transition" 
+         data-bug-id="yellowjacket" 
+         data-category="sticky" 
+         data-search="yellowjacket stunt wasp vespula maculifrons sticky yellow">
+      
+      <div class="flex items-start justify-between gap-2">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-center text-2xl shadow-inner flex-shrink-0">
+            🐝
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-white font-brand">Yellowjacket Stunt Wasp</h4>
+            <p class="text-[10px] italic text-slate-400 font-serif">Vespula maculifrons</p>
+          </div>
+        </div>
+        <div class="flex flex-col items-end gap-1">
+          <span class="text-[9px] font-semibold px-2 py-0.5 rounded-full border bg-amber-500/20 text-amber-300 border-amber-500/30">
+            Yellow Pollen Gloop
+          </span>
+          <span class="text-[8px] font-semibold uppercase tracking-wider px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 border border-slate-700">
+            Sticky Pollen
+          </span>
+        </div>
+      </div>
+
+      <p class="text-[11px] text-amber-200/90 italic bg-amber-500/10 border-l-2 border-amber-400 p-1.5 rounded-r font-serif">
+        "Feared by picnickers everywhere, stopped cold by a Subaru Forester."
+      </p>
+
+      <div class="bg-slate-950/70 p-2 rounded-lg border border-slate-800/80">
+        <h5 class="text-[9px] uppercase font-bold text-lime-400 tracking-wider mb-1 flex items-center gap-1">
+          <span>🧠</span> Road-Trip Bug Clues
+        </h5>
+        <ul class="space-y-1">
+          
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+      <span class="leading-relaxed">Unlike honeybees, wasps can sting multiple times without losing their stinger.</span>
+    </li>
+  
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+      <span class="leading-relaxed">In late summer, yellowjackets develop a massive sweet tooth and seek out sweet fruit and soda.</span>
+    </li>
+  
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+      <span class="leading-relaxed">They build papery nests by chewing wood fibers into fine pulp mixed with saliva.</span>
+    </li>
+  
+        </ul>
+      </div>
+
+      <div class="bg-sky-950/30 border border-sky-800/40 p-1.5 rounded-lg flex items-start gap-1.5 text-[10px] text-sky-200">
+        <span>🧽</span>
+        <div>
+          <span class="font-bold text-sky-300">Clean:</span>
+          <span>Soak with a damp sponge for 60 seconds to soften the sticky sugar-rich fluid.</span>
+        </div>
+      </div>
+
+      <button type="button" 
+              class="guide-investigate-btn w-full py-1.5 px-3 rounded-lg bg-slate-800 hover:bg-lime-500/20 border border-slate-700 hover:border-lime-500/40 text-slate-200 hover:text-lime-300 text-xs font-brand font-semibold transition flex items-center justify-center gap-1.5 active:scale-98"
+              data-bug-id="yellowjacket">
+        <span>🔬</span> Load as Specimen & Scan
+      </button>
+    </div>
+  
+    <div class="guide-bug-card p-3 bg-slate-900/90 border border-slate-800 rounded-xl space-y-2 hover:border-slate-700 transition" 
+         data-bug-id="grasshopper" 
+         data-category="chunky" 
+         data-search="carolina grasshopper dissosteira carolina chunky green brown">
+      
+      <div class="flex items-start justify-between gap-2">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-center text-2xl shadow-inner flex-shrink-0">
+            🦗
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-white font-brand">Carolina Grasshopper</h4>
+            <p class="text-[10px] italic text-slate-400 font-serif">Dissosteira carolina</p>
+          </div>
+        </div>
+        <div class="flex flex-col items-end gap-1">
+          <span class="text-[9px] font-semibold px-2 py-0.5 rounded-full border bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+            Green-Brown Fluids
+          </span>
+          <span class="text-[8px] font-semibold uppercase tracking-wider px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 border border-slate-700">
+            Chunky Cruncher
+          </span>
+        </div>
+      </div>
+
+      <p class="text-[11px] text-amber-200/90 italic bg-amber-500/10 border-l-2 border-amber-400 p-1.5 rounded-r font-serif">
+        "One giant leap for bug-kind, one sudden landing on the passenger side window."
+      </p>
+
+      <div class="bg-slate-950/70 p-2 rounded-lg border border-slate-800/80">
+        <h5 class="text-[9px] uppercase font-bold text-lime-400 tracking-wider mb-1 flex items-center gap-1">
+          <span>🧠</span> Road-Trip Bug Clues
+        </h5>
+        <ul class="space-y-1">
+          
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+      <span class="leading-relaxed">Grasshoppers can leap 20 times the length of their body — like a human jumping over a basketball court!</span>
+    </li>
+  
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+      <span class="leading-relaxed">They have ears located on their bellies beneath their wings.</span>
+    </li>
+  
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+      <span class="leading-relaxed">Their greenish fluids come from digested chlorophyll grass juice inside their digestive tract.</span>
+    </li>
+  
+        </ul>
+      </div>
+
+      <div class="bg-sky-950/30 border border-sky-800/40 p-1.5 rounded-lg flex items-start gap-1.5 text-[10px] text-sky-200">
+        <span>🧽</span>
+        <div>
+          <span class="font-bold text-sky-300">Clean:</span>
+          <span>Use bug-sponge mesh or a soft microfiber towel with soapy suds.</span>
+        </div>
+      </div>
+
+      <button type="button" 
+              class="guide-investigate-btn w-full py-1.5 px-3 rounded-lg bg-slate-800 hover:bg-lime-500/20 border border-slate-700 hover:border-lime-500/40 text-slate-200 hover:text-lime-300 text-xs font-brand font-semibold transition flex items-center justify-center gap-1.5 active:scale-98"
+              data-bug-id="grasshopper">
+        <span>🔬</span> Load as Specimen & Scan
+      </button>
+    </div>
+  
+    <div class="guide-bug-card p-3 bg-slate-900/90 border border-slate-800 rounded-xl space-y-2 hover:border-slate-700 transition" 
+         data-bug-id="firefly" 
+         data-category="sticky" 
+         data-search="twinkling lightning bug photinus pyralis sticky yellow">
+      
+      <div class="flex items-start justify-between gap-2">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-center text-2xl shadow-inner flex-shrink-0">
+            ✨
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-white font-brand">Twinkling Lightning Bug</h4>
+            <p class="text-[10px] italic text-slate-400 font-serif">Photinus pyralis</p>
+          </div>
+        </div>
+        <div class="flex flex-col items-end gap-1">
+          <span class="text-[9px] font-semibold px-2 py-0.5 rounded-full border bg-amber-500/20 text-amber-300 border-amber-500/30">
+            Yellow Pollen Gloop
+          </span>
+          <span class="text-[8px] font-semibold uppercase tracking-wider px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 border border-slate-700">
+            Sticky Pollen
+          </span>
+        </div>
+      </div>
+
+      <p class="text-[11px] text-amber-200/90 italic bg-amber-500/10 border-l-2 border-amber-400 p-1.5 rounded-r font-serif">
+        "A gentle forest lantern that left its final glow on our road-trip windshield."
+      </p>
+
+      <div class="bg-slate-950/70 p-2 rounded-lg border border-slate-800/80">
+        <h5 class="text-[9px] uppercase font-bold text-lime-400 tracking-wider mb-1 flex items-center gap-1">
+          <span>🧠</span> Road-Trip Bug Clues
+        </h5>
+        <ul class="space-y-1">
+          
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+      <span class="leading-relaxed">Fireflies are actually beetles! Their glowing light produces almost 100% light with 0% wasted heat.</span>
+    </li>
+  
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+      <span class="leading-relaxed">Each firefly species blinks in its own secret morse-code flash pattern to find friends.</span>
+    </li>
+  
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+      <span class="leading-relaxed">Their glow comes from a natural chemical reaction between luciferin and oxygen.</span>
+    </li>
+  
+        </ul>
+      </div>
+
+      <div class="bg-sky-950/30 border border-sky-800/40 p-1.5 rounded-lg flex items-start gap-1.5 text-[10px] text-sky-200">
+        <span>🧽</span>
+        <div>
+          <span class="font-bold text-sky-300">Clean:</span>
+          <span>Wipe with water and glass cleaner — firefly residue is soft and cleans up with ease.</span>
+        </div>
+      </div>
+
+      <button type="button" 
+              class="guide-investigate-btn w-full py-1.5 px-3 rounded-lg bg-slate-800 hover:bg-lime-500/20 border border-slate-700 hover:border-lime-500/40 text-slate-200 hover:text-lime-300 text-xs font-brand font-semibold transition flex items-center justify-center gap-1.5 active:scale-98"
+              data-bug-id="firefly">
+        <span>🔬</span> Load as Specimen & Scan
+      </button>
+    </div>
+  
+    <div class="guide-bug-card p-3 bg-slate-900/90 border border-slate-800 rounded-xl space-y-2 hover:border-slate-700 transition" 
+         data-bug-id="mosquito" 
+         data-category="winged" 
+         data-search="highway mosquito culex pipiens winged red black">
+      
+      <div class="flex items-start justify-between gap-2">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-center text-2xl shadow-inner flex-shrink-0">
+            🦟
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-white font-brand">Highway Mosquito</h4>
+            <p class="text-[10px] italic text-slate-400 font-serif">Culex pipiens</p>
+          </div>
+        </div>
+        <div class="flex flex-col items-end gap-1">
+          <span class="text-[9px] font-semibold px-2 py-0.5 rounded-full border bg-rose-500/20 text-rose-300 border-rose-500/30">
+            Red-Black Chitin
+          </span>
+          <span class="text-[8px] font-semibold uppercase tracking-wider px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 border border-slate-700">
+            Winged Flyer
+          </span>
+        </div>
+      </div>
+
+      <p class="text-[11px] text-amber-200/90 italic bg-amber-500/10 border-l-2 border-amber-400 p-1.5 rounded-r font-serif">
+        "The world's most annoying highway hitchhiker got permanently canceled."
+      </p>
+
+      <div class="bg-slate-950/70 p-2 rounded-lg border border-slate-800/80">
+        <h5 class="text-[9px] uppercase font-bold text-lime-400 tracking-wider mb-1 flex items-center gap-1">
+          <span>🧠</span> Road-Trip Bug Clues
+        </h5>
+        <ul class="space-y-1">
+          
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+      <span class="leading-relaxed">Only female mosquitoes bite; male mosquitoes feed peacefully on sweet plant nectar!</span>
+    </li>
+  
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+      <span class="leading-relaxed">Mosquitoes locate people by sniffing out the carbon dioxide gas in our breath from 75 feet away.</span>
+    </li>
+  
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+      <span class="leading-relaxed">They are attracted to dark-colored clothing and body warmth on humid nights.</span>
+    </li>
+  
+        </ul>
+      </div>
+
+      <div class="bg-sky-950/30 border border-sky-800/40 p-1.5 rounded-lg flex items-start gap-1.5 text-[10px] text-sky-200">
+        <span>🧽</span>
+        <div>
+          <span class="font-bold text-sky-300">Clean:</span>
+          <span>A standard spritz of wiper fluid removes this tiny red micro-dot immediately.</span>
+        </div>
+      </div>
+
+      <button type="button" 
+              class="guide-investigate-btn w-full py-1.5 px-3 rounded-lg bg-slate-800 hover:bg-lime-500/20 border border-slate-700 hover:border-lime-500/40 text-slate-200 hover:text-lime-300 text-xs font-brand font-semibold transition flex items-center justify-center gap-1.5 active:scale-98"
+              data-bug-id="mosquito">
+        <span>🔬</span> Load as Specimen & Scan
+      </button>
+    </div>
+  
+    <div class="guide-bug-card p-3 bg-slate-900/90 border border-slate-800 rounded-xl space-y-2 hover:border-slate-700 transition" 
+         data-bug-id="ladybug" 
+         data-category="chunky" 
+         data-search="seven-spotted ladybug coccinella septempunctata chunky red black">
+      
+      <div class="flex items-start justify-between gap-2">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-center text-2xl shadow-inner flex-shrink-0">
+            🐞
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-white font-brand">Seven-Spotted Ladybug</h4>
+            <p class="text-[10px] italic text-slate-400 font-serif">Coccinella septempunctata</p>
+          </div>
+        </div>
+        <div class="flex flex-col items-end gap-1">
+          <span class="text-[9px] font-semibold px-2 py-0.5 rounded-full border bg-rose-500/20 text-rose-300 border-rose-500/30">
+            Red-Black Chitin
+          </span>
+          <span class="text-[8px] font-semibold uppercase tracking-wider px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 border border-slate-700">
+            Chunky Cruncher
+          </span>
+        </div>
+      </div>
+
+      <p class="text-[11px] text-amber-200/90 italic bg-amber-500/10 border-l-2 border-amber-400 p-1.5 rounded-r font-serif">
+        "Good luck charm to gardeners, bad luck encounter on the interstate."
+      </p>
+
+      <div class="bg-slate-950/70 p-2 rounded-lg border border-slate-800/80">
+        <h5 class="text-[9px] uppercase font-bold text-lime-400 tracking-wider mb-1 flex items-center gap-1">
+          <span>🧠</span> Road-Trip Bug Clues
+        </h5>
+        <ul class="space-y-1">
+          
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+      <span class="leading-relaxed">A single ladybug can devour over 5,000 crop-damaging aphids during its lifetime.</span>
+    </li>
+  
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+      <span class="leading-relaxed">When scared, ladybugs can pretend to be dead and release a harmless yellow fluid from their knees!</span>
+    </li>
+  
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+      <span class="leading-relaxed">Their bright red color warns birds that they taste nasty and bitter.</span>
+    </li>
+  
+        </ul>
+      </div>
+
+      <div class="bg-sky-950/30 border border-sky-800/40 p-1.5 rounded-lg flex items-start gap-1.5 text-[10px] text-sky-200">
+        <span>🧽</span>
+        <div>
+          <span class="font-bold text-sky-300">Clean:</span>
+          <span>Clean with regular glass cleaner and paper towels — leaves minimal residue.</span>
+        </div>
+      </div>
+
+      <button type="button" 
+              class="guide-investigate-btn w-full py-1.5 px-3 rounded-lg bg-slate-800 hover:bg-lime-500/20 border border-slate-700 hover:border-lime-500/40 text-slate-200 hover:text-lime-300 text-xs font-brand font-semibold transition flex items-center justify-center gap-1.5 active:scale-98"
+              data-bug-id="ladybug">
+        <span>🔬</span> Load as Specimen & Scan
+      </button>
+    </div>
+  
+    <div class="guide-bug-card p-3 bg-slate-900/90 border border-slate-800 rounded-xl space-y-2 hover:border-slate-700 transition" 
+         data-bug-id="stink_bug" 
+         data-category="chunky" 
+         data-search="marmorated stink bug halyomorpha halys chunky green brown">
+      
+      <div class="flex items-start justify-between gap-2">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-center text-2xl shadow-inner flex-shrink-0">
+            🛡️
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-white font-brand">Marmorated Stink Bug</h4>
+            <p class="text-[10px] italic text-slate-400 font-serif">Halyomorpha halys</p>
+          </div>
+        </div>
+        <div class="flex flex-col items-end gap-1">
+          <span class="text-[9px] font-semibold px-2 py-0.5 rounded-full border bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+            Green-Brown Fluids
+          </span>
+          <span class="text-[8px] font-semibold uppercase tracking-wider px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 border border-slate-700">
+            Chunky Cruncher
+          </span>
+        </div>
+      </div>
+
+      <p class="text-[11px] text-amber-200/90 italic bg-amber-500/10 border-l-2 border-amber-400 p-1.5 rounded-r font-serif">
+        "It had the armor of a medieval knight, but unfortunately met modern horsepower."
+      </p>
+
+      <div class="bg-slate-950/70 p-2 rounded-lg border border-slate-800/80">
+        <h5 class="text-[9px] uppercase font-bold text-lime-400 tracking-wider mb-1 flex items-center gap-1">
+          <span>🧠</span> Road-Trip Bug Clues
+        </h5>
+        <ul class="space-y-1">
+          
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+      <span class="leading-relaxed">The shield-shaped body of a stink bug is an ancient natural armor design.</span>
+    </li>
+  
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+      <span class="leading-relaxed">Their defensive odor smells like cilantro or crushed marzipan to ward off predators.</span>
+    </li>
+  
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+      <span class="leading-relaxed">They can fly up to 3 miles in a day searching for fruit orchards.</span>
+    </li>
+  
+        </ul>
+      </div>
+
+      <div class="bg-sky-950/30 border border-sky-800/40 p-1.5 rounded-lg flex items-start gap-1.5 text-[10px] text-sky-200">
+        <span>🧽</span>
+        <div>
+          <span class="font-bold text-sky-300">Clean:</span>
+          <span>Wash off quickly with dish soap and rinse well to prevent any faint aroma.</span>
+        </div>
+      </div>
+
+      <button type="button" 
+              class="guide-investigate-btn w-full py-1.5 px-3 rounded-lg bg-slate-800 hover:bg-lime-500/20 border border-slate-700 hover:border-lime-500/40 text-slate-200 hover:text-lime-300 text-xs font-brand font-semibold transition flex items-center justify-center gap-1.5 active:scale-98"
+              data-bug-id="stink_bug">
+        <span>🔬</span> Load as Specimen & Scan
+      </button>
+    </div>
+  
+    <div class="guide-bug-card p-3 bg-slate-900/90 border border-slate-800 rounded-xl space-y-2 hover:border-slate-700 transition" 
+         data-bug-id="mayfly" 
+         data-category="winged" 
+         data-search="lakefront mayfly ephemera vulgata winged dusty grey">
+      
+      <div class="flex items-start justify-between gap-2">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-center text-2xl shadow-inner flex-shrink-0">
+            🪶
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-white font-brand">Lakefront Mayfly</h4>
+            <p class="text-[10px] italic text-slate-400 font-serif">Ephemera vulgata</p>
+          </div>
+        </div>
+        <div class="flex flex-col items-end gap-1">
+          <span class="text-[9px] font-semibold px-2 py-0.5 rounded-full border bg-slate-500/20 text-slate-300 border-slate-500/30">
+            Dusty Grey Scales
+          </span>
+          <span class="text-[8px] font-semibold uppercase tracking-wider px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 border border-slate-700">
+            Winged Flyer
+          </span>
+        </div>
+      </div>
+
+      <p class="text-[11px] text-amber-200/90 italic bg-amber-500/10 border-l-2 border-amber-400 p-1.5 rounded-r font-serif">
+        "Its entire adult lifespan was only 24 hours — it spent the last 2 seconds meeting our wipers."
+      </p>
+
+      <div class="bg-slate-950/70 p-2 rounded-lg border border-slate-800/80">
+        <h5 class="text-[9px] uppercase font-bold text-lime-400 tracking-wider mb-1 flex items-center gap-1">
+          <span>🧠</span> Road-Trip Bug Clues
+        </h5>
+        <ul class="space-y-1">
+          
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+      <span class="leading-relaxed">Adult mayflies have no mouths and cannot eat — their sole life mission is to fly and lay eggs!</span>
+    </li>
+  
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+      <span class="leading-relaxed">Mayflies hatch in swarms so massive they can sometimes show up on weather Doppler radar!</span>
+    </li>
+  
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+      <span class="leading-relaxed">Finding mayflies near lakes is a sign of super clean, unpolluted water.</span>
+    </li>
+  
+        </ul>
+      </div>
+
+      <div class="bg-sky-950/30 border border-sky-800/40 p-1.5 rounded-lg flex items-start gap-1.5 text-[10px] text-sky-200">
+        <span>🧽</span>
+        <div>
+          <span class="font-bold text-sky-300">Clean:</span>
+          <span>Mayfly residue is very watery; simple wiper fluid and a few wiper swipes clean it right up.</span>
+        </div>
+      </div>
+
+      <button type="button" 
+              class="guide-investigate-btn w-full py-1.5 px-3 rounded-lg bg-slate-800 hover:bg-lime-500/20 border border-slate-700 hover:border-lime-500/40 text-slate-200 hover:text-lime-300 text-xs font-brand font-semibold transition flex items-center justify-center gap-1.5 active:scale-98"
+              data-bug-id="mayfly">
+        <span>🔬</span> Load as Specimen & Scan
+      </button>
+    </div>
+  
+    <div class="guide-bug-card p-3 bg-slate-900/90 border border-slate-800 rounded-xl space-y-2 hover:border-slate-700 transition" 
+         data-bug-id="crane_fly" 
+         data-category="winged" 
+         data-search="giant crane fly (skeeter eater) tipula oleracea winged dusty grey">
+      
+      <div class="flex items-start justify-between gap-2">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-center text-2xl shadow-inner flex-shrink-0">
+            🕷️
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-white font-brand">Giant Crane Fly (Skeeter Eater)</h4>
+            <p class="text-[10px] italic text-slate-400 font-serif">Tipula oleracea</p>
+          </div>
+        </div>
+        <div class="flex flex-col items-end gap-1">
+          <span class="text-[9px] font-semibold px-2 py-0.5 rounded-full border bg-slate-500/20 text-slate-300 border-slate-500/30">
+            Dusty Grey Scales
+          </span>
+          <span class="text-[8px] font-semibold uppercase tracking-wider px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 border border-slate-700">
+            Winged Flyer
+          </span>
+        </div>
+      </div>
+
+      <p class="text-[11px] text-amber-200/90 italic bg-amber-500/10 border-l-2 border-amber-400 p-1.5 rounded-r font-serif">
+        "All legs and no brakes. Rest in spindly peace, giant dancing friend."
+      </p>
+
+      <div class="bg-slate-950/70 p-2 rounded-lg border border-slate-800/80">
+        <h5 class="text-[9px] uppercase font-bold text-lime-400 tracking-wider mb-1 flex items-center gap-1">
+          <span>🧠</span> Road-Trip Bug Clues
+        </h5>
+        <ul class="space-y-1">
+          
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+      <span class="leading-relaxed">Despite looking like giant mosquitoes, crane flies do NOT bite humans or animals at all!</span>
+    </li>
+  
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+      <span class="leading-relaxed">Their long legs break off easily if grabbed by predators, allowing them to escape like tricksters.</span>
+    </li>
+  
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+      <span class="leading-relaxed">Their larvae live in damp soil and help break down dead grass and fallen autumn leaves.</span>
+    </li>
+  
+        </ul>
+      </div>
+
+      <div class="bg-sky-950/30 border border-sky-800/40 p-1.5 rounded-lg flex items-start gap-1.5 text-[10px] text-sky-200">
+        <span>🧽</span>
+        <div>
+          <span class="font-bold text-sky-300">Clean:</span>
+          <span>The thin leg residue wipes away cleanly with a dry paper towel.</span>
+        </div>
+      </div>
+
+      <button type="button" 
+              class="guide-investigate-btn w-full py-1.5 px-3 rounded-lg bg-slate-800 hover:bg-lime-500/20 border border-slate-700 hover:border-lime-500/40 text-slate-200 hover:text-lime-300 text-xs font-brand font-semibold transition flex items-center justify-center gap-1.5 active:scale-98"
+              data-bug-id="crane_fly">
+        <span>🔬</span> Load as Specimen & Scan
+      </button>
+    </div>
+  
+    <div class="guide-bug-card p-3 bg-slate-900/90 border border-slate-800 rounded-xl space-y-2 hover:border-slate-700 transition" 
+         data-bug-id="water_bug" 
+         data-category="chunky" 
+         data-search="giant electric light bug lethocerus americanus chunky green brown">
+      
+      <div class="flex items-start justify-between gap-2">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-center text-2xl shadow-inner flex-shrink-0">
+            🦀
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-white font-brand">Giant Electric Light Bug</h4>
+            <p class="text-[10px] italic text-slate-400 font-serif">Lethocerus americanus</p>
+          </div>
+        </div>
+        <div class="flex flex-col items-end gap-1">
+          <span class="text-[9px] font-semibold px-2 py-0.5 rounded-full border bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+            Green-Brown Fluids
+          </span>
+          <span class="text-[8px] font-semibold uppercase tracking-wider px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 border border-slate-700">
+            Chunky Cruncher
+          </span>
+        </div>
+      </div>
+
+      <p class="text-[11px] text-amber-200/90 italic bg-amber-500/10 border-l-2 border-amber-400 p-1.5 rounded-r font-serif">
+        "The apex predator of roadside ditches met the immovable glass of the family truck."
+      </p>
+
+      <div class="bg-slate-950/70 p-2 rounded-lg border border-slate-800/80">
+        <h5 class="text-[9px] uppercase font-bold text-lime-400 tracking-wider mb-1 flex items-center gap-1">
+          <span>🧠</span> Road-Trip Bug Clues
+        </h5>
+        <ul class="space-y-1">
+          
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+      <span class="leading-relaxed">These giants are also called 'Toe-Biters' and can grow up to 4 inches long!</span>
+    </li>
+  
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+      <span class="leading-relaxed">They can catch and eat small fish, tadpoles, and even tiny baby frogs in ponds.</span>
+    </li>
+  
+    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+      <span class="w-3.5 h-3.5 rounded-full bg-lime-500/20 text-lime-400 font-bold text-[9px] flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+      <span class="leading-relaxed">At night they fly between ponds and are powerfully drawn to glowing gas station floodlights.</span>
+    </li>
+  
+        </ul>
+      </div>
+
+      <div class="bg-sky-950/30 border border-sky-800/40 p-1.5 rounded-lg flex items-start gap-1.5 text-[10px] text-sky-200">
+        <span>🧽</span>
+        <div>
+          <span class="font-bold text-sky-300">Clean:</span>
+          <span>This is a heavy impact! Use warm soapy water and a sponge to fully lift the thick residue.</span>
+        </div>
+      </div>
+
+      <button type="button" 
+              class="guide-investigate-btn w-full py-1.5 px-3 rounded-lg bg-slate-800 hover:bg-lime-500/20 border border-slate-700 hover:border-lime-500/40 text-slate-200 hover:text-lime-300 text-xs font-brand font-semibold transition flex items-center justify-center gap-1.5 active:scale-98"
+              data-bug-id="water_bug">
+        <span>🔬</span> Load as Specimen & Scan
+      </button>
+    </div>
+  
+          </div>
+        </div>
+
+        <!-- TAB 2: DETECTIVE MANUAL VIEW -->
+        <div id="guideHandbookSection" class="hidden p-4 overflow-y-auto custom-scrollbar space-y-3 flex-1 text-xs">
+          <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 space-y-2">
+            <h4 class="text-xs font-bold font-brand text-amber-300 flex items-center gap-1.5">
+              <span>🚗</span> Rule #1: Road-Trip Detective Safety
+            </h4>
+            <p class="text-slate-300 leading-relaxed text-[11px]">
+              Safety is our top highway priority! The driver focuses solely on the road. The co-pilot or kids in the back seats are the official SplatDex Splatter Investigators. Never snap pictures from the driver seat while moving.
+            </p>
+          </div>
+
+          <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 space-y-2">
+            <h4 class="text-xs font-bold font-brand text-lime-400 flex items-center gap-1.5">
+              <span>📸</span> Pro Photography Tips for Splatter Detection
+            </h4>
+            <ul class="space-y-1.5 text-slate-300 text-[11px]">
+              <li class="flex items-start gap-1.5">
+                <span class="text-lime-400 font-bold">•</span>
+                <span><strong>The Paper Trick:</strong> Hold a white notebook or sheet of paper inside the car 2 inches behind the splatter. This blocks sky glare and illuminates fluid colorimetry!</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-lime-400 font-bold">•</span>
+                <span><strong>Focus on the Glass:</strong> Tap your phone screen directly on the bug residue so the lens locks focus on the glass instead of the distant road.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-lime-400 font-bold">•</span>
+                <span><strong>Angle the Light:</strong> Side daylight highlights chitin reflections and wing fragments.</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 space-y-2">
+            <h4 class="text-xs font-bold font-brand text-sky-400 flex items-center gap-1.5">
+              <span>🔬</span> Splatter Anatomy & Fluid Decoder
+            </h4>
+            <div class="grid grid-cols-2 gap-2 text-[10px]">
+              <div class="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                <span class="font-bold text-amber-300 block mb-0.5">🟡 Yellow Fluid</span>
+                <span class="text-slate-300">Pollen collectors (Bees, Wasps). Sugar-rich and sticky residue.</span>
+              </div>
+              <div class="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                <span class="font-bold text-emerald-400 block mb-0.5">🟢 Green-Brown</span>
+                <span class="text-slate-300">Herbivores (Grasshoppers, Cicadas). Digested plant chlorophyll.</span>
+              </div>
+              <div class="p-2 rounded-lg bg-rose-500/10 border border-rose-500/20">
+                <span class="font-bold text-rose-300 block mb-0.5">🔴 Red / Crimson</span>
+                <span class="text-slate-300">Predators / Blood-feeders (Mosquitoes, Ladybugs). Micro droplets.</span>
+              </div>
+              <div class="p-2 rounded-lg bg-slate-500/10 border border-slate-500/20">
+                <span class="font-bold text-slate-300 block mb-0.5">⚪ Dusty Grey</span>
+                <span class="text-slate-300">Lepidoptera (Moths, Mayflies). Powdery chitin scales.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: CLEANING LAB VIEW -->
+        <div id="guideCleanupSection" class="hidden p-4 overflow-y-auto custom-scrollbar space-y-3 flex-1 text-xs">
+          <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 space-y-2">
+            <h4 class="text-xs font-bold font-brand text-amber-300 flex items-center gap-1.5">
+              <span>⚠️</span> The Golden Rule of Windscreen Care
+            </h4>
+            <p class="text-slate-300 text-[11px] leading-relaxed">
+              <strong>Never scrape dry bug splatters</strong> with credit cards, keys, or dry wipers! Insect exoskeletons contain hard chitin that can scratch automotive glass and ruin wiper rubber. Always soften them first.
+            </p>
+          </div>
+
+          <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 space-y-2">
+            <h4 class="text-xs font-bold font-brand text-lime-400 flex items-center gap-1.5">
+              <span>✨</span> Hack #1: The Dryer Sheet Miracle
+            </h4>
+            <p class="text-slate-300 text-[11px] leading-relaxed">
+              Take an ordinary laundry dryer sheet, wet it with water, and gently rub over baked-on bugs. The fabric softener agents instantly dissolve insect proteins without scratching glass or car clearcoat!
+            </p>
+          </div>
+
+          <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 space-y-2">
+            <h4 class="text-xs font-bold font-brand text-sky-400 flex items-center gap-1.5">
+              <span>🧪</span> Hack #2: 50/50 White Vinegar Spray
+            </h4>
+            <p class="text-slate-300 text-[11px] leading-relaxed">
+              Mix equal parts white vinegar and warm water in a spray bottle. Vinegar neutralizes acidic lovebug fluids and dissolves sticky honeybee pollen in 60 seconds flat.
+            </p>
+          </div>
+
+          <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 space-y-2">
+            <h4 class="text-xs font-bold font-brand text-purple-300 flex items-center gap-1.5">
+              <span>⏱️</span> Lovebug 48-Hour Warning
+            </h4>
+            <p class="text-slate-300 text-[11px] leading-relaxed">
+              Lovebug bodies turn acidic as they decompose under hot highway sun. If left on paint for more than 48 hours, the acid can etch your car clearcoat. Wash off at the next gas station!
+            </p>
+          </div>
+        </div>
+
+        <!-- TAB 4: BINGO VIEW -->
+        <div id="guideBingoSection" class="hidden p-4 overflow-y-auto custom-scrollbar space-y-3 flex-1 text-xs">
+          <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 flex items-center justify-between">
+            <div>
+              <h4 class="text-xs font-bold font-brand text-white">Road-Trip Splat Bingo</h4>
+              <p class="text-[10px] text-slate-400">Check off bugs your family spots on the highway!</p>
+            </div>
+            <button id="resetBingoBtn" class="text-[10px] px-2 py-1 rounded bg-slate-800 text-rose-300 hover:text-white border border-slate-700">
+              Reset
+            </button>
+          </div>
+
+          <div class="space-y-1.5" id="bingoListContainer">
+            
+  <label class="flex items-center justify-between p-2.5 bg-slate-900/80 border border-slate-800 rounded-xl hover:border-slate-700 cursor-pointer transition">
+    <div class="flex items-center gap-2.5">
+      <span class="text-xl">🪲</span>
+      <div>
+        <span class="text-xs font-bold text-white font-brand">General June Beetle</span>
+        <p class="text-[9px] text-slate-400">Chunky Cruncher • green brown</p>
+      </div>
+    </div>
+    <input type="checkbox" data-bingo-id="june_beetle" class="bingo-checkbox w-4 h-4 rounded text-lime-500 focus:ring-0 bg-slate-800 border-slate-700">
+  </label>
+
+  <label class="flex items-center justify-between p-2.5 bg-slate-900/80 border border-slate-800 rounded-xl hover:border-slate-700 cursor-pointer transition">
+    <div class="flex items-center gap-2.5">
+      <span class="text-xl">❤️</span>
+      <div>
+        <span class="text-xs font-bold text-white font-brand">Lovebug Road-Trip Duo</span>
+        <p class="text-[9px] text-slate-400">Winged Flyer • red black</p>
+      </div>
+    </div>
+    <input type="checkbox" data-bingo-id="lovebug" class="bingo-checkbox w-4 h-4 rounded text-lime-500 focus:ring-0 bg-slate-800 border-slate-700">
+  </label>
+
+  <label class="flex items-center justify-between p-2.5 bg-slate-900/80 border border-slate-800 rounded-xl hover:border-slate-700 cursor-pointer transition">
+    <div class="flex items-center gap-2.5">
+      <span class="text-xl">🐝</span>
+      <div>
+        <span class="text-xs font-bold text-white font-brand">Golden Honeybee</span>
+        <p class="text-[9px] text-slate-400">Sticky Pollen • yellow</p>
+      </div>
+    </div>
+    <input type="checkbox" data-bingo-id="honeybee" class="bingo-checkbox w-4 h-4 rounded text-lime-500 focus:ring-0 bg-slate-800 border-slate-700">
+  </label>
+
+  <label class="flex items-center justify-between p-2.5 bg-slate-900/80 border border-slate-800 rounded-xl hover:border-slate-700 cursor-pointer transition">
+    <div class="flex items-center gap-2.5">
+      <span class="text-xl">🦋</span>
+      <div>
+        <span class="text-xs font-bold text-white font-brand">Velvet Highway Moth</span>
+        <p class="text-[9px] text-slate-400">Winged Flyer • dusty grey</p>
+      </div>
+    </div>
+    <input type="checkbox" data-bingo-id="moth" class="bingo-checkbox w-4 h-4 rounded text-lime-500 focus:ring-0 bg-slate-800 border-slate-700">
+  </label>
+
+  <label class="flex items-center justify-between p-2.5 bg-slate-900/80 border border-slate-800 rounded-xl hover:border-slate-700 cursor-pointer transition">
+    <div class="flex items-center gap-2.5">
+      <span class="text-xl">⚡</span>
+      <div>
+        <span class="text-xs font-bold text-white font-brand">Electric Blue Dragonfly</span>
+        <p class="text-[9px] text-slate-400">Winged Flyer • blue</p>
+      </div>
+    </div>
+    <input type="checkbox" data-bingo-id="dragonfly" class="bingo-checkbox w-4 h-4 rounded text-lime-500 focus:ring-0 bg-slate-800 border-slate-700">
+  </label>
+
+  <label class="flex items-center justify-between p-2.5 bg-slate-900/80 border border-slate-800 rounded-xl hover:border-slate-700 cursor-pointer transition">
+    <div class="flex items-center gap-2.5">
+      <span class="text-xl">📢</span>
+      <div>
+        <span class="text-xs font-bold text-white font-brand">Dog-Day Screaming Cicada</span>
+        <p class="text-[9px] text-slate-400">Chunky Cruncher • green brown</p>
+      </div>
+    </div>
+    <input type="checkbox" data-bingo-id="cicada" class="bingo-checkbox w-4 h-4 rounded text-lime-500 focus:ring-0 bg-slate-800 border-slate-700">
+  </label>
+
+  <label class="flex items-center justify-between p-2.5 bg-slate-900/80 border border-slate-800 rounded-xl hover:border-slate-700 cursor-pointer transition">
+    <div class="flex items-center gap-2.5">
+      <span class="text-xl">🪰</span>
+      <div>
+        <span class="text-xs font-bold text-white font-brand">Emerald Bottle Fly</span>
+        <p class="text-[9px] text-slate-400">Winged Flyer • green brown</p>
+      </div>
+    </div>
+    <input type="checkbox" data-bingo-id="green_bottle_fly" class="bingo-checkbox w-4 h-4 rounded text-lime-500 focus:ring-0 bg-slate-800 border-slate-700">
+  </label>
+
+  <label class="flex items-center justify-between p-2.5 bg-slate-900/80 border border-slate-800 rounded-xl hover:border-slate-700 cursor-pointer transition">
+    <div class="flex items-center gap-2.5">
+      <span class="text-xl">🐝</span>
+      <div>
+        <span class="text-xs font-bold text-white font-brand">Yellowjacket Stunt Wasp</span>
+        <p class="text-[9px] text-slate-400">Sticky Pollen • yellow</p>
+      </div>
+    </div>
+    <input type="checkbox" data-bingo-id="yellowjacket" class="bingo-checkbox w-4 h-4 rounded text-lime-500 focus:ring-0 bg-slate-800 border-slate-700">
+  </label>
+
+  <label class="flex items-center justify-between p-2.5 bg-slate-900/80 border border-slate-800 rounded-xl hover:border-slate-700 cursor-pointer transition">
+    <div class="flex items-center gap-2.5">
+      <span class="text-xl">🦗</span>
+      <div>
+        <span class="text-xs font-bold text-white font-brand">Carolina Grasshopper</span>
+        <p class="text-[9px] text-slate-400">Chunky Cruncher • green brown</p>
+      </div>
+    </div>
+    <input type="checkbox" data-bingo-id="grasshopper" class="bingo-checkbox w-4 h-4 rounded text-lime-500 focus:ring-0 bg-slate-800 border-slate-700">
+  </label>
+
+  <label class="flex items-center justify-between p-2.5 bg-slate-900/80 border border-slate-800 rounded-xl hover:border-slate-700 cursor-pointer transition">
+    <div class="flex items-center gap-2.5">
+      <span class="text-xl">✨</span>
+      <div>
+        <span class="text-xs font-bold text-white font-brand">Twinkling Lightning Bug</span>
+        <p class="text-[9px] text-slate-400">Sticky Pollen • yellow</p>
+      </div>
+    </div>
+    <input type="checkbox" data-bingo-id="firefly" class="bingo-checkbox w-4 h-4 rounded text-lime-500 focus:ring-0 bg-slate-800 border-slate-700">
+  </label>
+
+  <label class="flex items-center justify-between p-2.5 bg-slate-900/80 border border-slate-800 rounded-xl hover:border-slate-700 cursor-pointer transition">
+    <div class="flex items-center gap-2.5">
+      <span class="text-xl">🦟</span>
+      <div>
+        <span class="text-xs font-bold text-white font-brand">Highway Mosquito</span>
+        <p class="text-[9px] text-slate-400">Winged Flyer • red black</p>
+      </div>
+    </div>
+    <input type="checkbox" data-bingo-id="mosquito" class="bingo-checkbox w-4 h-4 rounded text-lime-500 focus:ring-0 bg-slate-800 border-slate-700">
+  </label>
+
+  <label class="flex items-center justify-between p-2.5 bg-slate-900/80 border border-slate-800 rounded-xl hover:border-slate-700 cursor-pointer transition">
+    <div class="flex items-center gap-2.5">
+      <span class="text-xl">🐞</span>
+      <div>
+        <span class="text-xs font-bold text-white font-brand">Seven-Spotted Ladybug</span>
+        <p class="text-[9px] text-slate-400">Chunky Cruncher • red black</p>
+      </div>
+    </div>
+    <input type="checkbox" data-bingo-id="ladybug" class="bingo-checkbox w-4 h-4 rounded text-lime-500 focus:ring-0 bg-slate-800 border-slate-700">
+  </label>
+
+  <label class="flex items-center justify-between p-2.5 bg-slate-900/80 border border-slate-800 rounded-xl hover:border-slate-700 cursor-pointer transition">
+    <div class="flex items-center gap-2.5">
+      <span class="text-xl">🛡️</span>
+      <div>
+        <span class="text-xs font-bold text-white font-brand">Marmorated Stink Bug</span>
+        <p class="text-[9px] text-slate-400">Chunky Cruncher • green brown</p>
+      </div>
+    </div>
+    <input type="checkbox" data-bingo-id="stink_bug" class="bingo-checkbox w-4 h-4 rounded text-lime-500 focus:ring-0 bg-slate-800 border-slate-700">
+  </label>
+
+  <label class="flex items-center justify-between p-2.5 bg-slate-900/80 border border-slate-800 rounded-xl hover:border-slate-700 cursor-pointer transition">
+    <div class="flex items-center gap-2.5">
+      <span class="text-xl">🪶</span>
+      <div>
+        <span class="text-xs font-bold text-white font-brand">Lakefront Mayfly</span>
+        <p class="text-[9px] text-slate-400">Winged Flyer • dusty grey</p>
+      </div>
+    </div>
+    <input type="checkbox" data-bingo-id="mayfly" class="bingo-checkbox w-4 h-4 rounded text-lime-500 focus:ring-0 bg-slate-800 border-slate-700">
+  </label>
+
+  <label class="flex items-center justify-between p-2.5 bg-slate-900/80 border border-slate-800 rounded-xl hover:border-slate-700 cursor-pointer transition">
+    <div class="flex items-center gap-2.5">
+      <span class="text-xl">🕷️</span>
+      <div>
+        <span class="text-xs font-bold text-white font-brand">Giant Crane Fly (Skeeter Eater)</span>
+        <p class="text-[9px] text-slate-400">Winged Flyer • dusty grey</p>
+      </div>
+    </div>
+    <input type="checkbox" data-bingo-id="crane_fly" class="bingo-checkbox w-4 h-4 rounded text-lime-500 focus:ring-0 bg-slate-800 border-slate-700">
+  </label>
+
+  <label class="flex items-center justify-between p-2.5 bg-slate-900/80 border border-slate-800 rounded-xl hover:border-slate-700 cursor-pointer transition">
+    <div class="flex items-center gap-2.5">
+      <span class="text-xl">🦀</span>
+      <div>
+        <span class="text-xs font-bold text-white font-brand">Giant Electric Light Bug</span>
+        <p class="text-[9px] text-slate-400">Chunky Cruncher • green brown</p>
+      </div>
+    </div>
+    <input type="checkbox" data-bingo-id="water_bug" class="bingo-checkbox w-4 h-4 rounded text-lime-500 focus:ring-0 bg-slate-800 border-slate-700">
+  </label>
+
+          </div>
         </div>
       </div>
     </div>
+
 
     <!-- FORENSIC CAMERA & PREVIEW CANVAS AREA -->
     <section class="bg-splat-card border border-splat-border rounded-2xl p-4 shadow-lg flex flex-col space-y-3">
