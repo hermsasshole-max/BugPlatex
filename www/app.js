@@ -350,6 +350,7 @@ const elements = {
   guideBugList: document.getElementById('guideBugList'),
 
   snapPhotoBtn: document.getElementById('snapPhotoBtn'),
+  cameraInput: document.getElementById('cameraInput'),
   fileInput: document.getElementById('fileInput'),
   analyzeBtn: document.getElementById('analyzeBtn'),
   analyzeBtnText: document.getElementById('analyzeBtnText'),
@@ -627,6 +628,7 @@ function attachEventListeners() {
 
   // Camera & Upload Triggers
   elements.snapPhotoBtn?.addEventListener('click', handleCameraCapture);
+  elements.cameraInput?.addEventListener('change', handleFileUpload);
   elements.fileInput?.addEventListener('change', handleFileUpload);
 
   // Sample Buttons
@@ -662,15 +664,21 @@ async function handleCameraCapture() {
         const mime = photo.format ? `image/${photo.format}` : 'image/jpeg';
         displayLoadedImage(`data:${mime};base64,${photo.base64String}`, photo.base64String, mime);
         playSound('splat');
+        return;
       }
     } catch (err) {
-      console.warn('Capacitor camera failed or canceled, falling back to file picker:', err);
-      if (err.message !== 'User cancelled photos app') {
-        elements.fileInput?.click();
+      console.warn('Capacitor camera failed or canceled, falling back to camera input:', err);
+      if (err.message === 'User cancelled photos app') {
+        return;
       }
     }
-  } else {
-    elements.fileInput?.click();
+  }
+
+  // Fallback to camera input with capture="environment" for direct Camera app launch
+  if (elements.cameraInput) {
+    elements.cameraInput.click();
+  } else if (elements.fileInput) {
+    elements.fileInput.click();
   }
 }
 

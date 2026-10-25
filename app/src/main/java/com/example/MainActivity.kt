@@ -1,8 +1,10 @@
 package com.example
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.webkit.ValueCallback
@@ -19,18 +21,35 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import com.example.ui.theme.MyApplicationTheme
+import java.io.File
 
 class MainActivity : ComponentActivity() {
 
     private var filePathCallback: ValueCallback<Array<Uri>>? = null
+    private var pendingCameraUri: Uri? = null
 
+    // Direct Camera Picture Launcher
+    private val takePictureLauncher = registerForActivityResult(
+        ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success && pendingCameraUri != null) {
+            filePathCallback?.onReceiveValue(arrayOf(pendingCameraUri!!))
+        } else {
+            filePathCallback?.onReceiveValue(null)
+        }
+        filePathCallback = null
+        pendingCameraUri = null
+    }
+
+    // Gallery / File Picker Launcher
     private val filePickerLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -42,6 +61,71 @@ class MainActivity : ComponentActivity() {
             filePathCallback?.onReceiveValue(null)
         }
         filePathCallback = null
+    }
+
+    // Camera Permission Launcher
+    private val cameraPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            launchDirectCamera()
+        } else {
+            launchGalleryPicker(null)
+        }
+    }
+
+    private fun launchDirectCamera() {
+        try {
+            val photoFile = File.createTempFile("splat_camera_", ".jpg", cacheDir)
+            val photoUri = FileProvider.getUriForFile(
+                this,
+                "${applicationContext.packageName}.fileprovider",
+                photoFile
+            )
+            pendingCameraUri = photoUri
+            takePictureLauncher.launch(photoUri)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            filePathCallback?.onReceiveValue(null)
+            filePathCallback = null
+            pendingCameraUri = null
+        }
+    }
+
+    private fun launchGalleryPicker(fileChooserParams: WebChromeClient.FileChooserParams?) {
+        try {
+            val intent = fileChooserParams?.createIntent() ?: Intent(Intent.ACTION_GET_CONTENT).apply {
+                type = "image/*"
+            }
+            filePickerLauncher.launch(intent)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            filePathCallback?.onReceiveValue(null)
+            filePathCallback = null
+        }
+    }
+
+    private fun handleFileChooser(
+        callback: ValueCallback<Array<Uri>>?,
+        fileChooserParams: WebChromeClient.FileChooserParams?
+    ) {
+        filePathCallback = callback
+
+        val isCapture = fileChooserParams?.isCaptureEnabled == true
+        if (isCapture) {
+            val hasCameraPermission = ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.CAMERA
+            ) == PackageManager.PERMISSION_GRANTED
+
+            if (hasCameraPermission) {
+                launchDirectCamera()
+            } else {
+                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+            }
+        } else {
+            launchGalleryPicker(fileChooserParams)
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -59,16 +143,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     SplatDexWebView(
                         onOpenFileChooser = { callback, fileChooserParams ->
-                            filePathCallback = callback
-                            try {
-                                val intent = fileChooserParams?.createIntent() ?: Intent(Intent.ACTION_GET_CONTENT).apply {
-                                    type = "image/*"
-                                }
-                                filePickerLauncher.launch(intent)
-                            } catch (e: Exception) {
-                                filePathCallback?.onReceiveValue(null)
-                                filePathCallback = null
-                            }
+                            handleFileChooser(callback, fileChooserParams)
                         }
                     )
                 }
@@ -106,11 +181,6 @@ fun SplatDexWebView(
                         view: WebView?,
                         request: WebResourceRequest?
                     ): Boolean {
-                        val url = request?.url?.toString() ?: return false
-                        if (url.startsWith("http://") || url.startsWith("https://")) {
-                            // Keep inside webview or open external
-                            return false
-                        }
                         return false
                     }
                 }
