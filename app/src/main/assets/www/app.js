@@ -13,6 +13,7 @@ const state = {
   isAnalyzing: false,
   soundEnabled: true,
   forceOfflineMode: false,
+  playCrashCam: true,
   journal: []
 };
 
@@ -392,7 +393,14 @@ const elements = {
   journalList: document.getElementById('journalList'),
   journalEmptyState: document.getElementById('journalEmptyState'),
   journalCount: document.getElementById('journalCount'),
-  toast: document.getElementById('toast')
+  toast: document.getElementById('toast'),
+
+  // Crash-Cam Elements
+  crashCamToggle: document.getElementById('crashCamToggle'),
+  crashCamModal: document.getElementById('crashCamModal'),
+  crashCamCanvas: document.getElementById('crashCamCanvas'),
+  skipCrashCamBtn: document.getElementById('skipCrashCamBtn'),
+  crashCamSubtitle: document.getElementById('crashCamSubtitle')
 };
 
 // --- AUDIO SYNTHESIS FOR KID-FRIENDLY SFX ---
@@ -521,6 +529,16 @@ function loadSettings() {
     if (elements.forceOfflineToggle) elements.forceOfflineToggle.checked = true;
   }
 
+  const storedCrashCam = localStorage.getItem('splatdex_crash_cam');
+  if (storedCrashCam !== null) {
+    state.playCrashCam = storedCrashCam === 'true';
+  } else {
+    state.playCrashCam = true;
+  }
+  if (elements.crashCamToggle) {
+    elements.crashCamToggle.checked = state.playCrashCam;
+  }
+
   if (elements.apiKeyInput) {
     elements.apiKeyInput.value = state.apiKey;
   }
@@ -606,6 +624,14 @@ function attachEventListeners() {
     showToast(state.forceOfflineMode ? 'Offline Road-Trip Mode Engaged' : 'Online AI Mode Enabled');
   });
 
+  // Funny Windshield Crash-Cam Replay toggle
+  elements.crashCamToggle?.addEventListener('change', (e) => {
+    state.playCrashCam = e.target.checked;
+    localStorage.setItem('splatdex_crash_cam', state.playCrashCam ? 'true' : 'false');
+    playSound('click');
+    showToast(state.playCrashCam ? 'Crash-Cam Animation On' : 'Crash-Cam Animation Off');
+  });
+
   // Save Settings
   elements.saveApiKeyBtn?.addEventListener('click', () => {
     const key = elements.apiKeyInput.value.trim();
@@ -613,6 +639,10 @@ function attachEventListeners() {
     localStorage.setItem('gemini_api_key', key);
     state.forceOfflineMode = !!elements.forceOfflineToggle?.checked;
     localStorage.setItem('splatdex_force_offline', state.forceOfflineMode ? 'true' : 'false');
+    if (elements.crashCamToggle) {
+      state.playCrashCam = elements.crashCamToggle.checked;
+      localStorage.setItem('splatdex_crash_cam', state.playCrashCam ? 'true' : 'false');
+    }
 
     updateApiKeyStatusUI();
     updateNetworkStatus();
@@ -717,6 +747,11 @@ function displayLoadedImage(dataUrl, base64Clean, mimeType) {
   elements.reportCard?.classList.add('hidden');
   elements.errorCard?.classList.add('hidden');
   elements.failsafeBanner?.classList.add('hidden');
+
+  // Trigger 2-second funny windshield crash-cam animation immediately upon selecting a photo
+  if (state.playCrashCam) {
+    playCrashCamAnimation();
+  }
 }
 
 // --- SAMPLE GENERATOR ---
@@ -787,6 +822,11 @@ function loadSampleSplatter(type) {
   elements.reportCard?.classList.add('hidden');
   elements.errorCard?.classList.add('hidden');
   elements.failsafeBanner?.classList.add('hidden');
+
+  // Trigger funny windshield crash-cam animation on sample test specimen selection
+  if (state.playCrashCam) {
+    playCrashCamAnimation();
+  }
 }
 
 function drawSplatter(ctx, x, y, radius, colorDark, colorLight, numDrops) {
@@ -896,11 +936,589 @@ async function analyzeImagePixelsColorimetry() {
   });
 }
 
+// --- FUNNY WINDSHIELD CRASH-CAM ANIMATION & SYNTHESIS ---
+let crashCamAnimationId = null;
+
+function playCrashCamSound(type) {
+  if (!state.soundEnabled) return () => {};
+  try {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+    const now = audioCtx.currentTime;
+
+    if (type === 'buzz') {
+      // Escalating doppler mosquito / fly buzz with tremolo
+      const osc = audioCtx.createOscillator();
+      const lfo = audioCtx.createOscillator();
+      const lfoGain = audioCtx.createGain();
+      const gain = audioCtx.createGain();
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(140, now);
+      osc.frequency.exponentialRampToValueAtTime(750, now + 0.75);
+
+      lfo.frequency.setValueAtTime(32, now); // flutter
+      lfoGain.gain.setValueAtTime(0.04, now);
+
+      gain.gain.setValueAtTime(0.02, now);
+      gain.gain.linearRampToValueAtTime(0.18, now + 0.7);
+
+      lfo.connect(lfoGain.gain);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      lfo.start(now);
+      osc.start(now);
+
+      return () => {
+        try {
+          const stopTime = audioCtx.currentTime;
+          gain.gain.linearRampToValueAtTime(0.001, stopTime + 0.05);
+          osc.stop(stopTime + 0.06);
+          lfo.stop(stopTime + 0.06);
+        } catch (_) {}
+      };
+    } else if (type === 'splat') {
+      // Comic Cartoon Splat: Low bass thud + noise wet slap + comical boing
+      const thudOsc = audioCtx.createOscillator();
+      const thudGain = audioCtx.createGain();
+      thudOsc.type = 'triangle';
+      thudOsc.frequency.setValueAtTime(160, now);
+      thudOsc.frequency.exponentialRampToValueAtTime(30, now + 0.25);
+      thudGain.gain.setValueAtTime(0.45, now);
+      thudGain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+      thudOsc.connect(thudGain);
+      thudGain.connect(audioCtx.destination);
+      thudOsc.start(now);
+      thudOsc.stop(now + 0.25);
+
+      const squishOsc = audioCtx.createOscillator();
+      const squishGain = audioCtx.createGain();
+      squishOsc.type = 'sawtooth';
+      squishOsc.frequency.setValueAtTime(450, now);
+      squishOsc.frequency.linearRampToValueAtTime(120, now + 0.2);
+      squishGain.gain.setValueAtTime(0.2, now);
+      squishGain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+      squishOsc.connect(squishGain);
+      squishGain.connect(audioCtx.destination);
+      squishOsc.start(now);
+      squishOsc.stop(now + 0.2);
+
+      const boingOsc = audioCtx.createOscillator();
+      const boingGain = audioCtx.createGain();
+      boingOsc.type = 'sine';
+      boingOsc.frequency.setValueAtTime(260, now + 0.1);
+      boingOsc.frequency.exponentialRampToValueAtTime(540, now + 0.35);
+      boingGain.gain.setValueAtTime(0.18, now + 0.1);
+      boingGain.gain.exponentialRampToValueAtTime(0.01, now + 0.38);
+      boingOsc.connect(boingGain);
+      boingGain.connect(audioCtx.destination);
+      boingOsc.start(now + 0.1);
+      boingOsc.stop(now + 0.38);
+    } else if (type === 'squeak') {
+      // Windshield Wiper Squeegee Rubber Chirp
+      const squeakOsc = audioCtx.createOscillator();
+      const squeakGain = audioCtx.createGain();
+      squeakOsc.type = 'sine';
+      squeakOsc.frequency.setValueAtTime(1800, now);
+      squeakOsc.frequency.linearRampToValueAtTime(2600, now + 0.08);
+      squeakOsc.frequency.linearRampToValueAtTime(1400, now + 0.18);
+      squeakGain.gain.setValueAtTime(0.12, now);
+      squeakGain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
+      squeakOsc.connect(squeakGain);
+      squeakGain.connect(audioCtx.destination);
+      squeakOsc.start(now);
+      squeakOsc.stop(now + 0.19);
+    }
+  } catch (e) {
+    console.debug('CrashCam audio err', e);
+  }
+  return () => {};
+}
+
+function playCrashCamAnimation(onComplete) {
+  if (!elements.crashCamModal || !elements.crashCamCanvas) {
+    if (onComplete) onComplete();
+    return;
+  }
+
+  const canvas = elements.crashCamCanvas;
+  const ctx = canvas.getContext('2d');
+  const width = canvas.width;   // 480
+  const height = canvas.height; // 360
+
+  elements.crashCamModal.classList.remove('hidden');
+  if (elements.crashCamSubtitle) {
+    elements.crashCamSubtitle.textContent = 'Incoming high-speed insect in flight trajectory! 🪰💨';
+  }
+
+  let isCompleted = false;
+  let buzzStopper = playCrashCamSound('buzz');
+  let phaseTriggeredSplat = false;
+  let phaseTriggeredSqueak = false;
+
+  const finish = () => {
+    if (isCompleted) return;
+    isCompleted = true;
+    if (crashCamAnimationId) {
+      cancelAnimationFrame(crashCamAnimationId);
+      crashCamAnimationId = null;
+    }
+    if (buzzStopper) {
+      buzzStopper();
+      buzzStopper = null;
+    }
+    elements.crashCamModal.classList.add('hidden');
+    canvas.classList.remove('shake-screen');
+    if (onComplete) onComplete();
+  };
+
+  // Wire skip button
+  const handleSkip = (e) => {
+    e?.stopPropagation();
+    finish();
+  };
+  elements.skipCrashCamBtn?.addEventListener('click', handleSkip, { once: true });
+
+  const startTime = performance.now();
+  const totalDuration = 2000; // 2.0-second 'bug hitting glass' sequence
+
+  // Generate random splatter droplets once for consistent splash drawing
+  const splatterDroplets = [];
+  for (let i = 0; i < 24; i++) {
+    const angle = (Math.PI * 2 / 24) * i + (Math.random() - 0.5) * 0.3;
+    const distance = 40 + Math.random() * 85;
+    const radius = 3 + Math.random() * 9;
+    splatterDroplets.push({ angle, distance, radius });
+  }
+
+  function frame(timestamp) {
+    if (isCompleted) return;
+    const elapsed = timestamp - startTime;
+
+    // --- DRAW SCENE ---
+    ctx.clearRect(0, 0, width, height);
+
+    // 1. Sky & Horizon
+    const skyGrad = ctx.createLinearGradient(0, 0, 0, 160);
+    skyGrad.addColorStop(0, '#020617');
+    skyGrad.addColorStop(1, '#0f172a');
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(0, 0, width, 160);
+
+    // Distant highway mountains / hills
+    ctx.fillStyle = '#1e293b';
+    ctx.beginPath();
+    ctx.moveTo(0, 160);
+    ctx.lineTo(80, 130);
+    ctx.lineTo(160, 150);
+    ctx.lineTo(240, 135);
+    ctx.lineTo(340, 155);
+    ctx.lineTo(420, 128);
+    ctx.lineTo(480, 160);
+    ctx.closePath();
+    ctx.fill();
+
+    // 2. Highway Asphalt Road with perspective
+    ctx.fillStyle = '#18181b';
+    ctx.beginPath();
+    ctx.moveTo(215, 160);
+    ctx.lineTo(265, 160);
+    ctx.lineTo(480, 360);
+    ctx.lineTo(0, 360);
+    ctx.closePath();
+    ctx.fill();
+
+    // Road verge / desert borders
+    ctx.fillStyle = '#27272a';
+    ctx.beginPath();
+    ctx.moveTo(0, 160);
+    ctx.lineTo(215, 160);
+    ctx.lineTo(0, 360);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(480, 160);
+    ctx.lineTo(265, 160);
+    ctx.lineTo(480, 360);
+    ctx.closePath();
+    ctx.fill();
+
+    // Highway moving yellow dashed center line (scrolling down fast)
+    const stripeProgress = (elapsed % 250) / 250;
+    for (let i = 0; i < 5; i++) {
+      const stripeFrac = ((i + stripeProgress) / 5);
+      const stripeY = 160 + stripeFrac * stripeFrac * 200;
+      const stripeH = Math.max(4, stripeFrac * 28);
+      const stripeW = Math.max(2, stripeFrac * 10);
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(240 - stripeW / 2, stripeY, stripeW, stripeH);
+    }
+
+    // Car hood / dashboard at bottom
+    ctx.fillStyle = '#09090b';
+    ctx.beginPath();
+    ctx.moveTo(0, 360);
+    ctx.lineTo(0, 335);
+    ctx.quadraticCurveTo(240, 310, 480, 335);
+    ctx.lineTo(480, 360);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = '#27272a';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, 335);
+    ctx.quadraticCurveTo(240, 310, 480, 335);
+    ctx.stroke();
+
+    // Windshield reflection diagonal glare lines
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
+    ctx.lineWidth = 14;
+    ctx.beginPath();
+    ctx.moveTo(60, 0);
+    ctx.lineTo(0, 180);
+    ctx.moveTo(220, 0);
+    ctx.lineTo(120, 300);
+    ctx.moveTo(380, 0);
+    ctx.lineTo(260, 360);
+    ctx.stroke();
+
+    // --- PHASE 1: BUG APPROACHING (0 to 750ms) ---
+    if (elapsed < 750) {
+      const progress = elapsed / 750;
+      const ease = progress * progress * progress; // zooms towards camera exponentially
+      const bugSize = 5 + ease * 125;
+      const bugX = 240 + Math.sin(elapsed * 0.02) * 18 * (1 - progress);
+      const bugY = 165 + ease * 25;
+      const wingFlap = Math.sin(elapsed * 0.06);
+
+      ctx.save();
+      ctx.translate(bugX, bugY);
+
+      // Flapping translucent cartoon wings
+      ctx.fillStyle = 'rgba(224, 242, 254, 0.65)';
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = Math.max(1, bugSize * 0.02);
+
+      // Left wing
+      ctx.save();
+      ctx.rotate(-0.4 - wingFlap * 0.6);
+      ctx.beginPath();
+      ctx.ellipse(-bugSize * 0.45, -bugSize * 0.25, bugSize * 0.55, bugSize * 0.25, -Math.PI / 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+
+      // Right wing
+      ctx.save();
+      ctx.rotate(0.4 + wingFlap * 0.6);
+      ctx.beginPath();
+      ctx.ellipse(bugSize * 0.45, -bugSize * 0.25, bugSize * 0.55, bugSize * 0.25, Math.PI / 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+
+      // Bug Body (Chubby striped green/amber beetle with little legs)
+      ctx.fillStyle = '#65a30d'; // lime green
+      ctx.beginPath();
+      ctx.ellipse(0, 0, bugSize * 0.38, bugSize * 0.32, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.lineWidth = Math.max(1.5, bugSize * 0.04);
+      ctx.strokeStyle = '#14532d';
+      ctx.stroke();
+
+      // Stripes on shell
+      ctx.strokeStyle = '#365314';
+      ctx.lineWidth = Math.max(1, bugSize * 0.03);
+      ctx.beginPath();
+      ctx.moveTo(-bugSize * 0.25, 0);
+      ctx.lineTo(bugSize * 0.25, 0);
+      ctx.moveTo(-bugSize * 0.2, bugSize * 0.12);
+      ctx.lineTo(bugSize * 0.2, bugSize * 0.12);
+      ctx.stroke();
+
+      // Flailing antennae
+      ctx.strokeStyle = '#14532d';
+      ctx.lineWidth = Math.max(1, bugSize * 0.025);
+      ctx.beginPath();
+      ctx.moveTo(-bugSize * 0.15, -bugSize * 0.25);
+      ctx.lineTo(-bugSize * 0.35, -bugSize * 0.55 + Math.sin(elapsed * 0.04) * 4);
+      ctx.moveTo(bugSize * 0.15, -bugSize * 0.25);
+      ctx.lineTo(bugSize * 0.35, -bugSize * 0.55 - Math.sin(elapsed * 0.04) * 4);
+      ctx.stroke();
+
+      // Googly Eyes (Wide with shock as it gets closer!)
+      const eyeR = bugSize * 0.14;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(-bugSize * 0.15, -bugSize * 0.1, eyeR, 0, Math.PI * 2);
+      ctx.arc(bugSize * 0.15, -bugSize * 0.1, eyeR, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Panicked pupils
+      ctx.fillStyle = '#000000';
+      const pupilShift = progress > 0.7 ? 0 : Math.sin(elapsed * 0.03) * 2;
+      ctx.beginPath();
+      ctx.arc(-bugSize * 0.15 + pupilShift, -bugSize * 0.1, eyeR * 0.45, 0, Math.PI * 2);
+      ctx.arc(bugSize * 0.15 - pupilShift, -bugSize * 0.1, eyeR * 0.45, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Wide open screaming mouth when close
+      if (progress > 0.45) {
+        ctx.fillStyle = '#7f1d1d';
+        ctx.beginPath();
+        ctx.ellipse(0, bugSize * 0.14, bugSize * 0.14, bugSize * 0.12, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#000';
+        ctx.stroke();
+
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(-bugSize * 0.04, bugSize * 0.04, bugSize * 0.08, bugSize * 0.04);
+
+        ctx.fillStyle = '#38bdf8';
+        ctx.beginPath();
+        ctx.arc(-bugSize * 0.42, -bugSize * 0.3, bugSize * 0.05, 0, Math.PI * 2);
+        ctx.arc(bugSize * 0.42, -bugSize * 0.3, bugSize * 0.05, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
+    // --- PHASE 2 & 3: IMPACT SPLATTER (750ms onwards) ---
+    if (elapsed >= 750) {
+      if (!phaseTriggeredSplat) {
+        phaseTriggeredSplat = true;
+        if (buzzStopper) {
+          buzzStopper();
+          buzzStopper = null;
+        }
+        playCrashCamSound('splat');
+        canvas.classList.add('shake-screen');
+        setTimeout(() => canvas.classList.remove('shake-screen'), 350);
+        if (elements.crashCamSubtitle) {
+          elements.crashCamSubtitle.textContent = '💥 KAPOW! Direct impact on safety glass!';
+        }
+      }
+
+      const impactElapsed = elapsed - 750;
+      const splashProgress = Math.min(1, impactElapsed / 250);
+
+      const impactX = 240;
+      const impactY = 190;
+      const maxSplatterR = 85;
+      const currentSplatterR = maxSplatterR * (0.4 + splashProgress * 0.6);
+
+      // Glass spiderweb cracks
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      for (let r = 25; r <= 80; r += 25) {
+        const crackR = r * splashProgress;
+        for (let a = 0; a < Math.PI * 2; a += 0.5) {
+          const cx = impactX + Math.cos(a) * (crackR + (a % 2 === 0 ? 5 : -4));
+          const cy = impactY + Math.sin(a) * (crackR + (a % 2 === 0 ? -4 : 6));
+          if (a === 0) ctx.moveTo(cx, cy);
+          else ctx.lineTo(cx, cy);
+        }
+        ctx.closePath();
+      }
+      const fractureAngles = [0.2, 0.7, 1.4, 2.1, 2.8, 3.5, 4.3, 5.2, 5.9];
+      fractureAngles.forEach((angle) => {
+        const len = (90 + (angle * 17) % 30) * splashProgress;
+        ctx.moveTo(impactX, impactY);
+        const midX = impactX + Math.cos(angle) * (len * 0.5) + (angle % 2 ? 6 : -6);
+        const midY = impactY + Math.sin(angle) * (len * 0.5) + (angle % 2 ? -6 : 6);
+        const endX = impactX + Math.cos(angle) * len;
+        const endY = impactY + Math.sin(angle) * len;
+        ctx.lineTo(midX, midY);
+        ctx.lineTo(endX, endY);
+      });
+      ctx.stroke();
+
+      // Slime Splatter (Juicy bright neon-lime green with golden-amber gooey center)
+      const grad = ctx.createRadialGradient(impactX, impactY, 8, impactX, impactY, currentSplatterR);
+      grad.addColorStop(0, '#facc15');
+      grad.addColorStop(0.4, '#84cc16');
+      grad.addColorStop(0.85, '#4d7c0f');
+      grad.addColorStop(1, 'rgba(77, 124, 15, 0)');
+
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(impactX, impactY, currentSplatterR, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Viscous droplet tentacles flying outward
+      ctx.fillStyle = '#84cc16';
+      splatterDroplets.forEach(drop => {
+        const dropDist = drop.distance * splashProgress;
+        const dx = impactX + Math.cos(drop.angle) * dropDist;
+        const dy = impactY + Math.sin(drop.angle) * dropDist;
+        ctx.beginPath();
+        ctx.arc(dx, dy, drop.radius * splashProgress, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = '#4d7c0f';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(impactX + Math.cos(drop.angle) * (currentSplatterR * 0.3), impactY + Math.sin(drop.angle) * (currentSplatterR * 0.3));
+        ctx.lineTo(dx, dy);
+        ctx.stroke();
+      });
+
+      // Squished bug remnant bits
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.4)';
+      ctx.beginPath();
+      ctx.ellipse(impactX - 35, impactY - 18, 24 * splashProgress, 10 * splashProgress, -0.4, 0, Math.PI * 2);
+      ctx.ellipse(impactX + 38, impactY - 12, 22 * splashProgress, 9 * splashProgress, 0.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Two comical X eyes stuck on glass
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(impactX - 18, impactY - 12, 10, 0, Math.PI * 2);
+      ctx.arc(impactX + 18, impactY - 12, 10, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 2;
+      [-18, 18].forEach(eyeX => {
+        ctx.beginPath();
+        ctx.moveTo(impactX + eyeX - 4, impactY - 12 - 4);
+        ctx.lineTo(impactX + eyeX + 4, impactY - 12 + 4);
+        ctx.moveTo(impactX + eyeX + 4, impactY - 12 - 4);
+        ctx.lineTo(impactX + eyeX - 4, impactY - 12 + 4);
+        ctx.stroke();
+      });
+
+      // Comic Book "SPLAT!" burst banner (visible during impact phase)
+      if (impactElapsed < 600) {
+        ctx.save();
+        ctx.translate(impactX, impactY - 55);
+        ctx.rotate(-0.12);
+
+        ctx.fillStyle = '#facc15';
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        const spikes = 12;
+        for (let s = 0; s < spikes * 2; s++) {
+          const r = s % 2 === 0 ? 46 : 28;
+          const sa = (Math.PI / spikes) * s;
+          const sx = Math.cos(sa) * r;
+          const sy = Math.sin(sa) * r;
+          if (s === 0) ctx.moveTo(sx, sy);
+          else ctx.lineTo(sx, sy);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.font = '900 22px "Bungee", Impact, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#dc2626';
+        ctx.fillText('SPLAT!', 0, 0);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        ctx.strokeText('SPLAT!', 0, 0);
+        ctx.restore();
+      }
+
+      // --- PHASE 3: WINDSHIELD WIPER BLADE SWEEP (1350ms onwards) ---
+      if (elapsed >= 1350) {
+        if (!phaseTriggeredSqueak) {
+          phaseTriggeredSqueak = true;
+          playCrashCamSound('squeak');
+          if (elements.crashCamSubtitle) {
+            elements.crashCamSubtitle.textContent = '🧽 Windshield wiper squeegeeing evidence...';
+          }
+        }
+
+        const wiperElapsed = elapsed - 1350;
+        const wiperProgress = Math.min(1, wiperElapsed / 550);
+        const wiperAngle = 0.35 + wiperProgress * 0.95;
+
+        const pivotX = 410;
+        const pivotY = 360;
+        const wiperLength = 260;
+        const tipX = pivotX - Math.cos(wiperAngle) * wiperLength;
+        const tipY = pivotY - Math.sin(wiperAngle) * wiperLength;
+
+        // Draw clear wiped arc over splatter
+        ctx.save();
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.beginPath();
+        ctx.moveTo(pivotX, pivotY);
+        ctx.arc(pivotX, pivotY, wiperLength, Math.PI - wiperAngle, Math.PI - 0.35, true);
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+        ctx.fill();
+        ctx.restore();
+
+        // Draw Wiper Arm & Rubber Blade
+        ctx.save();
+        ctx.strokeStyle = '#27272a';
+        ctx.lineWidth = 7;
+        ctx.beginPath();
+        ctx.moveTo(pivotX, pivotY);
+        ctx.lineTo(tipX, tipY);
+        ctx.stroke();
+
+        ctx.strokeStyle = '#18181b';
+        ctx.lineWidth = 5;
+        const perpX = Math.sin(wiperAngle) * 35;
+        const perpY = -Math.cos(wiperAngle) * 35;
+        ctx.beginPath();
+        ctx.moveTo(tipX - perpX, tipY - perpY);
+        ctx.lineTo(tipX + perpX, tipY + perpY);
+        ctx.stroke();
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        for (let w = -25; w <= 25; w += 10) {
+          ctx.beginPath();
+          ctx.arc(tipX + (perpX * w / 35), tipY + (perpY * w / 35), 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+    }
+
+    // Check completion of 2-second sequence
+    if (elapsed >= totalDuration) {
+      if (elements.crashCamSubtitle) {
+        elements.crashCamSubtitle.textContent = '🔬 Evidence secured! Ready for forensic scan...';
+      }
+      setTimeout(finish, 100);
+      return;
+    }
+
+    crashCamAnimationId = requestAnimationFrame(frame);
+  }
+
+  crashCamAnimationId = requestAnimationFrame(frame);
+}
+
 // --- COMPLETE FORENSIC INVESTIGATION WITH FAILSAFE FALLBACK ---
 async function startForensicInvestigation() {
   if (!state.currentImageBase64) {
     showError('No splatter image loaded. Please take a photo or select an image first.');
     return;
+  }
+
+  // If crash cam animation is still active from photo selection, finish it immediately
+  if (crashCamAnimationId && elements.skipCrashCamBtn) {
+    elements.skipCrashCamBtn.click();
   }
 
   setAnalyzingState(true);
