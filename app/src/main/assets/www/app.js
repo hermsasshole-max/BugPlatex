@@ -196,6 +196,7 @@ function checkEnvironment() {
 }
 
 function loadApiKey() {
+  // Check localStorage, and also check URL parameters if testing
   const urlParams = new URLSearchParams(window.location.search);
   const paramKey = urlParams.get('key');
   const storedKey = localStorage.getItem('gemini_api_key');
@@ -307,6 +308,7 @@ function attachEventListeners() {
 // --- IMAGE CAPTURE VIA CAPACITOR OR FILE INPUT ---
 async function handleCameraCapture() {
   playSound('click');
+  // Check if Capacitor Camera is available
   if (window.Capacitor && window.Capacitor.isPluginAvailable('Camera')) {
     try {
       const { Camera, CameraResultType, CameraSource } = window.Capacitor.Plugins;
@@ -329,6 +331,7 @@ async function handleCameraCapture() {
       }
     }
   } else {
+    // Standard Mobile / Web File Picker with camera capture environment
     elements.fileInput?.click();
   }
 }
@@ -347,6 +350,7 @@ function handleFileUpload(e) {
   reader.readAsDataURL(file);
 }
 
+// Display image and enable analysis CTA
 function displayLoadedImage(dataUrl, base64Clean, mimeType) {
   state.currentImageBase64 = base64Clean;
   state.currentImageMime = mimeType;
@@ -364,14 +368,17 @@ function displayLoadedImage(dataUrl, base64Clean, mimeType) {
     elements.specimenBadge.className = 'text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full bg-lime-500/20 text-lime-400 border border-lime-500/40';
   }
 
+  // Enable analysis button
   if (elements.analyzeBtn) {
     elements.analyzeBtn.disabled = false;
   }
 
+  // Hide old report/error
   elements.reportCard?.classList.add('hidden');
   elements.errorCard?.classList.add('hidden');
 }
 
+// --- SAMPLE SPLATTER GENERATOR FOR DEMO & TESTING ---
 function loadSampleSplatter(type) {
   playSound('splat');
   const canvas = elements.splatterCanvas;
@@ -380,9 +387,11 @@ function loadSampleSplatter(type) {
   canvas.height = 300;
   const ctx = canvas.getContext('2d');
 
+  // Background Windshield Glass Tint
   ctx.fillStyle = '#0c1322';
   ctx.fillRect(0, 0, 400, 300);
 
+  // Subtle glass reflection streaks
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
   ctx.lineWidth = 12;
   ctx.beginPath();
@@ -394,22 +403,28 @@ function loadSampleSplatter(type) {
   const centerY = 150;
 
   if (type === 'june_beetle') {
+    // Heavy iridescent green/brown smear with chitin shell flakes
     drawSplatter(ctx, centerX, centerY, 55, '#3f6212', '#65a30d', 14);
+    // Chitin wing fragments
     ctx.fillStyle = '#78350f';
     ctx.beginPath();
     ctx.ellipse(centerX - 12, centerY - 15, 16, 7, Math.PI / 4, 0, Math.PI * 2);
     ctx.ellipse(centerX + 18, centerY + 8, 14, 6, -Math.PI / 6, 0, Math.PI * 2);
     ctx.fill();
   } else if (type === 'lovebug') {
+    // Twin paired black and red fluid droplets
     drawSplatter(ctx, centerX - 25, centerY - 10, 35, '#1e1b4b', '#475569', 10);
     drawSplatter(ctx, centerX + 20, centerY + 10, 32, '#991b1b', '#ef4444', 9);
   } else if (type === 'moth') {
+    // Dusty powdery beige and grey spread
     drawSplatter(ctx, centerX, centerY, 60, '#78716c', '#d6d3d1', 18);
+    // Dust halo
     ctx.fillStyle = 'rgba(214, 211, 209, 0.25)';
     ctx.beginPath();
     ctx.arc(centerX, centerY, 75, 0, Math.PI * 2);
     ctx.fill();
   } else {
+    // Dragonfly: Long translucent smear with bright electric turquoise & amber
     drawSplatter(ctx, centerX, centerY, 40, '#0284c7', '#38bdf8', 12);
     ctx.strokeStyle = '#f59e0b';
     ctx.lineWidth = 3;
@@ -441,6 +456,7 @@ function loadSampleSplatter(type) {
 }
 
 function drawSplatter(ctx, x, y, radius, colorDark, colorLight, numDrops) {
+  // Main center splash
   const grad = ctx.createRadialGradient(x, y, 5, x, y, radius);
   grad.addColorStop(0, colorLight);
   grad.addColorStop(0.8, colorDark);
@@ -451,6 +467,7 @@ function drawSplatter(ctx, x, y, radius, colorDark, colorLight, numDrops) {
   ctx.arc(x, y, radius, 0, Math.PI * 2);
   ctx.fill();
 
+  // Droplet spatter streaks
   ctx.fillStyle = colorLight;
   for (let i = 0; i < numDrops; i++) {
     const angle = (Math.PI * 2 / numDrops) * i + (Math.random() - 0.5) * 0.4;
@@ -463,6 +480,7 @@ function drawSplatter(ctx, x, y, radius, colorDark, colorLight, numDrops) {
     ctx.arc(dropX, dropY, dropRadius, 0, Math.PI * 2);
     ctx.fill();
 
+    // Splash tendril
     ctx.strokeStyle = colorDark;
     ctx.lineWidth = 1.5;
     ctx.beginPath();
@@ -472,12 +490,14 @@ function drawSplatter(ctx, x, y, radius, colorDark, colorLight, numDrops) {
   }
 }
 
+// --- GEMINI VISION FORENSIC ANALYSIS ---
 async function analyzeSplatterWithGemini() {
   if (!state.currentImageBase64) {
     showError('No splatter image loaded. Please take a photo or select an image first.');
     return;
   }
 
+  // Ensure API key is configured
   if (!state.apiKey) {
     elements.settingsModal?.classList.remove('hidden');
     showError('Please configure your Gemini API Key in Settings to run Vision Forensics.');
@@ -488,7 +508,9 @@ async function analyzeSplatterWithGemini() {
   playSound('scan');
 
   try {
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(state.apiKey.trim())}`;
+    const modelsToTry = ['gemini-3.8-flash', 'gemini-3.5-flash'];
+    let lastError = null;
+    let data = null;
 
     const requestBody = {
       contents: [
@@ -517,21 +539,35 @@ async function analyzeSplatterWithGemini() {
       }
     };
 
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(requestBody)
-    });
+    for (const model of modelsToTry) {
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(state.apiKey.trim())}`;
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(requestBody)
+        });
 
-    if (!response.ok) {
-      const errorJson = await response.json().catch(() => ({}));
-      const msg = errorJson.error?.message || `HTTP ${response.status}: ${response.statusText}`;
-      throw new Error(`Gemini API Error: ${msg}`);
+        if (!response.ok) {
+          const errorJson = await response.json().catch(() => ({}));
+          const msg = errorJson.error?.message || `HTTP ${response.status}: ${response.statusText}`;
+          lastError = new Error(`Gemini API Error: ${msg}`);
+          console.warn(`Model ${model} failed: ${msg}. Checking fallback...`);
+          continue;
+        }
+
+        data = await response.json();
+        if (data) break;
+      } catch (reqErr) {
+        lastError = reqErr;
+      }
     }
 
-    const data = await response.json();
+    if (!data) {
+      throw lastError || new Error('Forensic analysis failed with all Gemini models.');
+    }
     const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!rawText) {
@@ -552,6 +588,7 @@ async function analyzeSplatterWithGemini() {
   }
 }
 
+// Update UI during AI scanning
 function setAnalyzingState(isScanning) {
   state.isAnalyzing = isScanning;
 
@@ -568,6 +605,7 @@ function setAnalyzingState(isScanning) {
     if (elements.analyzeBtnText) elements.analyzeBtnText.textContent = 'Analyzing Forensic Clues...';
     if (elements.analyzeBtnIcon) elements.analyzeBtnIcon.textContent = '⏳';
 
+    // Simulated progress steps for detective feel
     const stages = [
       { text: "Scanning glass splatter contour...", progress: "25%" },
       { text: "Detecting fluid viscidity & chitin fragments...", progress: "55%" },
@@ -595,18 +633,22 @@ function setAnalyzingState(isScanning) {
   }
 }
 
+// Show Error banner
 function showError(msg) {
   if (elements.errorMessage) elements.errorMessage.textContent = msg;
   elements.errorCard?.classList.remove('hidden');
   elements.errorCard?.scrollIntoView({ behavior: 'smooth' });
 }
 
+// --- RENDER STRUCTURED FORENSIC REPORT ---
 function renderForensicReport(data) {
   if (!elements.reportCard) return;
 
+  // Bug Name & Scientific Name
   if (elements.reportBugName) elements.reportBugName.textContent = data.bug_name || 'Mysterious Specimen';
   if (elements.reportScientificName) elements.reportScientificName.textContent = data.scientific_name ? `(${data.scientific_name})` : '';
 
+  // Select emoji based on bug name
   const nameLower = (data.bug_name || '').toLowerCase();
   let emoji = '🪲';
   if (nameLower.includes('bee') || nameLower.includes('wasp')) emoji = '🐝';
@@ -617,6 +659,7 @@ function renderForensicReport(data) {
   else if (nameLower.includes('grasshopper') || nameLower.includes('cricket')) emoji = '🦗';
   if (elements.reportBugEmoji) elements.reportBugEmoji.textContent = emoji;
 
+  // Confidence Level Badge
   if (elements.confidenceBadge) {
     const conf = data.confidence || 'Medium';
     elements.confidenceBadge.textContent = `${conf} Confidence`;
@@ -630,10 +673,12 @@ function renderForensicReport(data) {
     }
   }
 
+  // Eulogy
   if (elements.reportEulogy) {
     elements.reportEulogy.textContent = `"${data.eulogy || 'Gone, but immortalized on the windshield.'}"`;
   }
 
+  // 3 Bug Facts
   if (elements.reportBugFactsList) {
     elements.reportBugFactsList.innerHTML = '';
     const facts = Array.isArray(data.bug_facts) ? data.bug_facts : [data.bug_facts];
@@ -650,18 +695,22 @@ function renderForensicReport(data) {
     });
   }
 
+  // Cleanup Tip
   if (elements.reportCleanupTip) {
     elements.reportCleanupTip.textContent = data.windscreen_cleanup_tip || 'Clean immediately with warm soapy water and a microfiber cloth.';
   }
 
+  // Pre-Splat Image Concept
   if (elements.reportPreSplatPrompt) {
     elements.reportPreSplatPrompt.textContent = data.pre_splat_image_prompt || 'A vibrant insect enjoying sunny roadside air before impact.';
   }
 
+  // Show Report Card
   elements.reportCard.classList.remove('hidden');
   elements.reportCard.scrollIntoView({ behavior: 'smooth' });
 }
 
+// --- FIELD JOURNAL / LOCAL STORAGE ---
 function loadJournal() {
   try {
     const raw = localStorage.getItem('splatdex_journal');
@@ -731,6 +780,7 @@ function renderJournalUI() {
   }
 }
 
+// Share Report feature
 async function handleShareReport() {
   playSound('click');
   if (!state.currentAnalysis) return;
@@ -754,4 +804,5 @@ async function handleShareReport() {
   }
 }
 
+// Boot up app on DOM ready
 document.addEventListener('DOMContentLoaded', init);

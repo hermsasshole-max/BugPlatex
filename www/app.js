@@ -508,8 +508,9 @@ async function analyzeSplatterWithGemini() {
   playSound('scan');
 
   try {
-    // Construct Gemini REST API payload with Structured Outputs
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(state.apiKey.trim())}`;
+    const modelsToTry = ['gemini-3.8-flash', 'gemini-3.5-flash'];
+    let lastError = null;
+    let data = null;
 
     const requestBody = {
       contents: [
@@ -538,21 +539,35 @@ async function analyzeSplatterWithGemini() {
       }
     };
 
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(requestBody)
-    });
+    for (const model of modelsToTry) {
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(state.apiKey.trim())}`;
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(requestBody)
+        });
 
-    if (!response.ok) {
-      const errorJson = await response.json().catch(() => ({}));
-      const msg = errorJson.error?.message || `HTTP ${response.status}: ${response.statusText}`;
-      throw new Error(`Gemini API Error: ${msg}`);
+        if (!response.ok) {
+          const errorJson = await response.json().catch(() => ({}));
+          const msg = errorJson.error?.message || `HTTP ${response.status}: ${response.statusText}`;
+          lastError = new Error(`Gemini API Error: ${msg}`);
+          console.warn(`Model ${model} failed: ${msg}. Checking fallback...`);
+          continue;
+        }
+
+        data = await response.json();
+        if (data) break;
+      } catch (reqErr) {
+        lastError = reqErr;
+      }
     }
 
-    const data = await response.json();
+    if (!data) {
+      throw lastError || new Error('Forensic analysis failed with all Gemini models.');
+    }
     const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!rawText) {
