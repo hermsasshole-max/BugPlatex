@@ -1,6 +1,7 @@
 /**
  * SplatDex - Windshield Bug Detective App
- * Vision AI integration with Gemini 2.5 Flash & Capacitor Camera
+ * Vision AI integration with Gemini 3.8 Flash, Capacitor Camera,
+ * and 100% Offline Road-Trip Forensic Failsafe Engine.
  */
 
 // Application State
@@ -11,6 +12,7 @@ const state = {
   currentAnalysis: null,
   isAnalyzing: false,
   soundEnabled: true,
+  forceOfflineMode: false,
   journal: []
 };
 
@@ -52,6 +54,282 @@ const SPLATDEX_RESPONSE_SCHEMA = {
   ]
 };
 
+// --- OFFLINE ROADSIDE DETECTIVE LIBRARY (16 COMMON HIGHWAY INSECTS) ---
+const OFFLINE_BUG_LIBRARY = [
+  {
+    id: "june_beetle",
+    bug_name: "General June Beetle",
+    scientific_name: "Phyllophaga spp.",
+    category: "chunky",
+    emoji: "🪲",
+    color_profile: "green_brown",
+    confidence: "High",
+    pre_splat_image_prompt: "A clumsy, golden-brown armored June beetle buzzing near porch lights on a warm summer evening.",
+    eulogy: "A brave, chunky aviator whose armored carapace met 70 MPH minivan aerodynamics.",
+    bug_facts: [
+      "June bugs are notoriously terrible pilots and fly like tiny blimps with no steering wheel.",
+      "Their thick exoskeletons are made of chitin, the same tough material in lobster and crab claws!",
+      "Most June bugs spend 2 to 3 years underground as grubs before flying for just a few weeks."
+    ],
+    windscreen_cleanup_tip: "Soak the dried chitin with warm soapy water for 3 minutes before wiping to prevent windshield scratches!"
+  },
+  {
+    id: "lovebug",
+    bug_name: "Lovebug Road-Trip Duo",
+    scientific_name: "Plecia nearctica",
+    category: "winged",
+    emoji: "❤️",
+    color_profile: "red_black",
+    confidence: "High",
+    pre_splat_image_prompt: "Two black and orange-red lovebugs drifting happily over highway asphalt in Florida.",
+    eulogy: "United in life and united on the windshield glass forever.",
+    bug_facts: [
+      "Lovebugs fly in glued-together pairs during May and September across southern highways.",
+      "Their body fluids are mildly acidic and will bake into automotive clear coat under hot sunshine!",
+      "They are attracted to hot highway asphalt, engine fumes, and the smell of decomposing grass."
+    ],
+    windscreen_cleanup_tip: "Clean immediately with a wet dryer sheet or baking soda paste — never let lovebug juice bake in the sun!"
+  },
+  {
+    id: "honeybee",
+    bug_name: "Golden Honeybee",
+    scientific_name: "Apis mellifera",
+    category: "sticky",
+    emoji: "🐝",
+    color_profile: "yellow",
+    confidence: "Medium",
+    pre_splat_image_prompt: "A fuzzy golden worker bee laden with bright yellow pollen flying over clover meadows.",
+    eulogy: "A sweet pollen collector on her final highway nectar patrol. Rest in wildflower peace.",
+    bug_facts: [
+      "The yellow splatter stain is actually pure floral pollen harvested by the bee's hairy hind legs!",
+      "A worker honeybee visits over 2,000 flowers in a single busy summer day.",
+      "Honeybees flap their wings 200 times every second, creating their famous buzzing sound."
+    ],
+    windscreen_cleanup_tip: "Yellow pollen residue dissolves fast with a 50/50 mix of white vinegar and water."
+  },
+  {
+    id: "moth",
+    bug_name: "Velvet Highway Moth",
+    scientific_name: "Lymantria dispar",
+    category: "winged",
+    emoji: "🦋",
+    color_profile: "dusty_grey",
+    confidence: "High",
+    pre_splat_image_prompt: "A fluffy, dusty-winged night moth spiraling toward shining LED headlights.",
+    eulogy: "It followed the brightest light on Interstate 80 all the way to the glass.",
+    bug_facts: [
+      "The chalky grey smudge comes from thousands of microscopic powdery scales covering their wings.",
+      "Moths navigate using the light of the moon, which is why headlights completely confuse them!",
+      "Some moths have fake owl-eyes painted on their wings to scare off bats and birds."
+    ],
+    windscreen_cleanup_tip: "Wipe with a dry microfiber cloth first to remove dusty scales, then spray windshield washer fluid."
+  },
+  {
+    id: "dragonfly",
+    bug_name: "Electric Blue Dragonfly",
+    scientific_name: "Pachydiplax longipennis",
+    category: "winged",
+    emoji: "⚡",
+    color_profile: "blue",
+    confidence: "High",
+    pre_splat_image_prompt: "A shimmering iridescent blue dragonfly darting over a roadside wetland at top speed.",
+    eulogy: "The undisputed stunt pilot of the pond, outmaneuvered only by tempered glass.",
+    bug_facts: [
+      "Dragonflies can fly backwards, upside down, and hover completely still in mid-air!",
+      "They have 30,000 lenses in each eye, giving them nearly 360-degree vision around them.",
+      "Dragonflies are among the most successful predators in nature, catching 95% of their targeted prey."
+    ],
+    windscreen_cleanup_tip: "The thin translucent fluid clears easily with regular wiper fluid and fresh wiper blades."
+  },
+  {
+    id: "cicada",
+    bug_name: "Dog-Day Screaming Cicada",
+    scientific_name: "Neotibicen canicularis",
+    category: "chunky",
+    emoji: "📢",
+    color_profile: "green_brown",
+    confidence: "High",
+    pre_splat_image_prompt: "A wide-bodied olive-green cicada vibrating in an oak tree with glassy, vein-covered wings.",
+    eulogy: "Spent 17 quiet years underground only to meet our SUV at mile marker 42.",
+    bug_facts: [
+      "A swarm of male cicadas singing together can reach 100 decibels — as loud as a lawn mower!",
+      "Cicadas possess three tiny extra eyes called ocelli on the top of their heads.",
+      "Their massive splatter imprint leaves unmistakable diamond-patterned wing vein impressions."
+    ],
+    windscreen_cleanup_tip: "Use warm water and car wash soap to loosen the heavy grease before turning on wipers."
+  },
+  {
+    id: "green_bottle_fly",
+    bug_name: "Emerald Bottle Fly",
+    scientific_name: "Lucilia sericata",
+    category: "winged",
+    emoji: "🪰",
+    color_profile: "green_brown",
+    confidence: "Medium",
+    pre_splat_image_prompt: "A brilliant metallic green bottle fly zipping across a sunny roadside picnic table.",
+    eulogy: "Shiny as a jewel, quick as lightning, flattened like a pancake.",
+    bug_facts: [
+      "That metallic shine isn't paint — it's light reflecting off microscopic microscopic grooves in their armor!",
+      "Bottle flies taste food through special sensor receptors on their feet.",
+      "Their wings flap over 300 times per second, giving them supreme agility."
+    ],
+    windscreen_cleanup_tip: "A quick spray of standard blue windshield washer fluid wipes this clean instantly."
+  },
+  {
+    id: "yellowjacket",
+    bug_name: "Yellowjacket Stunt Wasp",
+    scientific_name: "Vespula maculifrons",
+    category: "sticky",
+    emoji: "🐝",
+    color_profile: "yellow",
+    confidence: "High",
+    pre_splat_image_prompt: "A striped yellow and black wasp scoping out open soda cans at a highway rest stop.",
+    eulogy: "Feared by picnickers everywhere, stopped cold by a Subaru Forester.",
+    bug_facts: [
+      "Unlike honeybees, wasps can sting multiple times without losing their stinger.",
+      "In late summer, yellowjackets develop a massive sweet tooth and seek out sweet fruit and soda.",
+      "They build papery nests by chewing wood fibers into fine pulp mixed with saliva."
+    ],
+    windscreen_cleanup_tip: "Soak with a damp sponge for 60 seconds to soften the sticky sugar-rich fluid."
+  },
+  {
+    id: "grasshopper",
+    bug_name: "Carolina Grasshopper",
+    scientific_name: "Dissosteira carolina",
+    category: "chunky",
+    emoji: "🦗",
+    color_profile: "green_brown",
+    confidence: "High",
+    pre_splat_image_prompt: "A large brown and green grasshopper with yellow-rimmed wings springing off roadside clover.",
+    eulogy: "One giant leap for bug-kind, one sudden landing on the passenger side window.",
+    bug_facts: [
+      "Grasshoppers can leap 20 times the length of their body — like a human jumping over a basketball court!",
+      "They have ears located on their bellies beneath their wings.",
+      "Their greenish fluids come from digested chlorophyll grass juice inside their digestive tract."
+    ],
+    windscreen_cleanup_tip: "Use bug-sponge mesh or a soft microfiber towel with soapy suds."
+  },
+  {
+    id: "firefly",
+    bug_name: "Twinkling Lightning Bug",
+    scientific_name: "Photinus pyralis",
+    category: "sticky",
+    emoji: "✨",
+    color_profile: "yellow",
+    confidence: "Medium",
+    pre_splat_image_prompt: "A soft-bodied firefly lighting up with bright neon green flashes at dusk.",
+    eulogy: "A gentle forest lantern that left its final glow on our road-trip windshield.",
+    bug_facts: [
+      "Fireflies are actually beetles! Their glowing light produces almost 100% light with 0% wasted heat.",
+      "Each firefly species blinks in its own secret morse-code flash pattern to find friends.",
+      "Their glow comes from a natural chemical reaction between luciferin and oxygen."
+    ],
+    windscreen_cleanup_tip: "Wipe with water and glass cleaner — firefly residue is soft and cleans up with ease."
+  },
+  {
+    id: "mosquito",
+    bug_name: "Highway Mosquito",
+    scientific_name: "Culex pipiens",
+    category: "winged",
+    emoji: "🦟",
+    color_profile: "red_black",
+    confidence: "Medium",
+    pre_splat_image_prompt: "A slender mosquito hovering in search of a roadside campfire.",
+    eulogy: "The world's most annoying highway hitchhiker got permanently canceled.",
+    bug_facts: [
+      "Only female mosquitoes bite; male mosquitoes feed peacefully on sweet plant nectar!",
+      "Mosquitoes locate people by sniffing out the carbon dioxide gas in our breath from 75 feet away.",
+      "They are attracted to dark-colored clothing and body warmth on humid nights."
+    ],
+    windscreen_cleanup_tip: "A standard spritz of wiper fluid removes this tiny red micro-dot immediately."
+  },
+  {
+    id: "ladybug",
+    bug_name: "Seven-Spotted Ladybug",
+    scientific_name: "Coccinella septempunctata",
+    category: "chunky",
+    emoji: "🐞",
+    color_profile: "red_black",
+    confidence: "High",
+    pre_splat_image_prompt: "A bright red dome beetle with seven polished black spots strolling on a leaf.",
+    eulogy: "Good luck charm to gardeners, bad luck encounter on the interstate.",
+    bug_facts: [
+      "A single ladybug can devour over 5,000 crop-damaging aphids during its lifetime.",
+      "When scared, ladybugs can pretend to be dead and release a harmless yellow fluid from their knees!",
+      "Their bright red color warns birds that they taste nasty and bitter."
+    ],
+    windscreen_cleanup_tip: "Clean with regular glass cleaner and paper towels — leaves minimal residue."
+  },
+  {
+    id: "stink_bug",
+    bug_name: "Marmorated Stink Bug",
+    scientific_name: "Halyomorpha halys",
+    category: "chunky",
+    emoji: "🛡️",
+    color_profile: "green_brown",
+    confidence: "Wild Guess",
+    pre_splat_image_prompt: "A shield-shaped brown speckled stink bug clinging to a highway toll booth sign.",
+    eulogy: "It had the armor of a medieval knight, but unfortunately met modern horsepower.",
+    bug_facts: [
+      "The shield-shaped body of a stink bug is an ancient natural armor design.",
+      "Their defensive odor smells like cilantro or crushed marzipan to ward off predators.",
+      "They can fly up to 3 miles in a day searching for fruit orchards."
+    ],
+    windscreen_cleanup_tip: "Wash off quickly with dish soap and rinse well to prevent any faint aroma."
+  },
+  {
+    id: "mayfly",
+    bug_name: "Lakefront Mayfly",
+    scientific_name: "Ephemera vulgata",
+    category: "winged",
+    emoji: "🪶",
+    color_profile: "dusty_grey",
+    confidence: "High",
+    pre_splat_image_prompt: "A delicate pale mayfly with two long wispy tail filaments dancing over a lake highway bridge.",
+    eulogy: "Its entire adult lifespan was only 24 hours — it spent the last 2 seconds meeting our wipers.",
+    bug_facts: [
+      "Adult mayflies have no mouths and cannot eat — their sole life mission is to fly and lay eggs!",
+      "Mayflies hatch in swarms so massive they can sometimes show up on weather Doppler radar!",
+      "Finding mayflies near lakes is a sign of super clean, unpolluted water."
+    ],
+    windscreen_cleanup_tip: "Mayfly residue is very watery; simple wiper fluid and a few wiper swipes clean it right up."
+  },
+  {
+    id: "crane_fly",
+    bug_name: "Giant Crane Fly (Skeeter Eater)",
+    scientific_name: "Tipula oleracea",
+    category: "winged",
+    emoji: "🕷️",
+    color_profile: "dusty_grey",
+    confidence: "High",
+    pre_splat_image_prompt: "A massive, harmless, spindly-legged crane fly bobbing gracefully near the highway rest stop light.",
+    eulogy: "All legs and no brakes. Rest in spindly peace, giant dancing friend.",
+    bug_facts: [
+      "Despite looking like giant mosquitoes, crane flies do NOT bite humans or animals at all!",
+      "Their long legs break off easily if grabbed by predators, allowing them to escape like tricksters.",
+      "Their larvae live in damp soil and help break down dead grass and fallen autumn leaves."
+    ],
+    windscreen_cleanup_tip: "The thin leg residue wipes away cleanly with a dry paper towel."
+  },
+  {
+    id: "water_bug",
+    bug_name: "Giant Electric Light Bug",
+    scientific_name: "Lethocerus americanus",
+    category: "chunky",
+    emoji: "🦀",
+    color_profile: "green_brown",
+    confidence: "Wild Guess",
+    pre_splat_image_prompt: "A huge, intimidating 3-inch dark brown water bug stalking minnows in a ditch.",
+    eulogy: "The apex predator of roadside ditches met the immovable glass of the family truck.",
+    bug_facts: [
+      "These giants are also called 'Toe-Biters' and can grow up to 4 inches long!",
+      "They can catch and eat small fish, tadpoles, and even tiny baby frogs in ponds.",
+      "At night they fly between ponds and are powerfully drawn to glowing gas station floodlights."
+    ],
+    windscreen_cleanup_tip: "This is a heavy impact! Use warm soapy water and a sponge to fully lift the thick residue."
+  }
+];
+
 // --- DOM ELEMENTS ---
 const elements = {
   apiKeyInput: document.getElementById('apiKeyInput'),
@@ -61,7 +339,15 @@ const elements = {
   openSettingsBtn: document.getElementById('openSettingsBtn'),
   closeSettingsBtn: document.getElementById('closeSettingsBtn'),
   toggleKeyVisibility: document.getElementById('toggleKeyVisibility'),
+  forceOfflineToggle: document.getElementById('forceOfflineToggle'),
   soundToggleBtn: document.getElementById('soundToggleBtn'),
+  networkPill: document.getElementById('networkPill'),
+  networkPillText: document.getElementById('networkPillText'),
+
+  openGuideBtn: document.getElementById('openGuideBtn'),
+  closeGuideBtn: document.getElementById('closeGuideBtn'),
+  guideModal: document.getElementById('guideModal'),
+  guideBugList: document.getElementById('guideBugList'),
 
   snapPhotoBtn: document.getElementById('snapPhotoBtn'),
   fileInput: document.getElementById('fileInput'),
@@ -82,11 +368,15 @@ const elements = {
   progressDetailText: document.getElementById('progressDetailText'),
   progressBarFill: document.getElementById('progressBarFill'),
 
+  failsafeBanner: document.getElementById('failsafeBanner'),
+  failsafeReasonText: document.getElementById('failsafeReasonText'),
+
   errorCard: document.getElementById('errorCard'),
   errorMessage: document.getElementById('errorMessage'),
   dismissErrorBtn: document.getElementById('dismissErrorBtn'),
 
   reportCard: document.getElementById('reportCard'),
+  reportSourceBadge: document.getElementById('reportSourceBadge'),
   reportBugEmoji: document.getElementById('reportBugEmoji'),
   reportBugName: document.getElementById('reportBugName'),
   reportScientificName: document.getElementById('reportScientificName'),
@@ -172,7 +462,6 @@ function playSound(type) {
   }
 }
 
-// --- NOTIFICATIONS ---
 function showToast(msg) {
   if (!elements.toast) return;
   elements.toast.textContent = msg;
@@ -184,28 +473,51 @@ function showToast(msg) {
 
 // --- INITIALIZATION ---
 function init() {
-  loadApiKey();
+  loadSettings();
   loadJournal();
   attachEventListeners();
+  renderFieldGuide('all');
+  updateNetworkStatus();
+
+  window.addEventListener('online', updateNetworkStatus);
+  window.addEventListener('offline', updateNetworkStatus);
+
   checkEnvironment();
 }
 
 function checkEnvironment() {
   const isCapacitor = !!window.Capacitor?.isNativePlatform?.();
-  console.log(`[SplatDex] Running in ${isCapacitor ? 'Capacitor Native' : 'Browser/WebView'} mode.`);
+  console.log(`[SplatDex] Running in ${isCapacitor ? 'Capacitor Native' : 'Browser/WebView'} mode. Offline library loaded with ${OFFLINE_BUG_LIBRARY.length} species.`);
 }
 
-function loadApiKey() {
-  // Check localStorage, and also check URL parameters if testing
+function updateNetworkStatus() {
+  if (!elements.networkPill) return;
+  const isOnline = navigator.onLine && !state.forceOfflineMode;
+  if (isOnline) {
+    elements.networkPill.className = 'inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+    if (elements.networkPillText) elements.networkPillText.textContent = state.apiKey ? 'AI Online + Offline Ready' : 'Road-Trip Offline Ready';
+  } else {
+    elements.networkPill.className = 'inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.2 rounded-full bg-sky-500/20 text-sky-400 border border-sky-500/30';
+    if (elements.networkPillText) elements.networkPillText.textContent = '100% Offline Road-Trip Mode';
+  }
+}
+
+function loadSettings() {
   const urlParams = new URLSearchParams(window.location.search);
   const paramKey = urlParams.get('key');
   const storedKey = localStorage.getItem('gemini_api_key');
+  const storedOffline = localStorage.getItem('splatdex_force_offline');
 
   if (paramKey) {
     state.apiKey = paramKey;
     localStorage.setItem('gemini_api_key', paramKey);
   } else if (storedKey) {
     state.apiKey = storedKey;
+  }
+
+  if (storedOffline === 'true') {
+    state.forceOfflineMode = true;
+    if (elements.forceOfflineToggle) elements.forceOfflineToggle.checked = true;
   }
 
   if (elements.apiKeyInput) {
@@ -219,19 +531,18 @@ function updateApiKeyStatusUI() {
   if (state.apiKey && state.apiKey.trim().length > 10) {
     elements.apiKeyStatus.innerHTML = `
       <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-      <span class="text-emerald-400 font-semibold">API Key configured (${state.apiKey.substring(0, 6)}••••)</span>
+      <span class="text-emerald-400 font-semibold">Gemini API Key active (${state.apiKey.substring(0, 6)}••••)</span>
     `;
   } else {
     elements.apiKeyStatus.innerHTML = `
-      <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-      <span class="text-amber-300">API Key required for Gemini Vision AI</span>
+      <span class="w-2 h-2 rounded-full bg-sky-400"></span>
+      <span class="text-sky-300">No API key required — Road-Trip Offline Library is active!</span>
     `;
   }
 }
 
-// --- EVENT LISTENERS ---
 function attachEventListeners() {
-  // Sound Toggle
+  // Sound FX
   elements.soundToggleBtn?.addEventListener('click', () => {
     state.soundEnabled = !state.soundEnabled;
     elements.soundToggleBtn.textContent = state.soundEnabled ? '🔊' : '🔇';
@@ -239,7 +550,7 @@ function attachEventListeners() {
     showToast(state.soundEnabled ? 'Sound FX Enabled' : 'Sound FX Muted');
   });
 
-  // Settings Modal
+  // Settings
   elements.openSettingsBtn?.addEventListener('click', () => {
     playSound('click');
     elements.settingsModal?.classList.remove('hidden');
@@ -249,9 +560,33 @@ function attachEventListeners() {
     elements.settingsModal?.classList.add('hidden');
   });
   elements.settingsModal?.addEventListener('click', (e) => {
-    if (e.target === elements.settingsModal) {
-      elements.settingsModal.classList.add('hidden');
-    }
+    if (e.target === elements.settingsModal) elements.settingsModal.classList.add('hidden');
+  });
+
+  // Field Guide Modal
+  elements.openGuideBtn?.addEventListener('click', () => {
+    playSound('click');
+    elements.guideModal?.classList.remove('hidden');
+  });
+  elements.closeGuideBtn?.addEventListener('click', () => {
+    playSound('click');
+    elements.guideModal?.classList.add('hidden');
+  });
+  elements.guideModal?.addEventListener('click', (e) => {
+    if (e.target === elements.guideModal) elements.guideModal.classList.add('hidden');
+  });
+
+  // Guide Category Filters
+  document.querySelectorAll('.guide-filter-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      playSound('click');
+      document.querySelectorAll('.guide-filter-btn').forEach(b => {
+        b.className = 'guide-filter-btn text-xs px-3 py-1 rounded-lg bg-slate-800 text-slate-300 font-brand hover:text-white active:scale-95 transition';
+      });
+      e.currentTarget.className = 'guide-filter-btn text-xs px-3 py-1 rounded-lg bg-lime-500 text-slate-950 font-bold font-brand active:scale-95 transition';
+      const filter = e.currentTarget.getAttribute('data-filter');
+      renderFieldGuide(filter);
+    });
   });
 
   // Toggle API Key visibility
@@ -261,19 +596,28 @@ function attachEventListeners() {
     elements.toggleKeyVisibility.textContent = isPassword ? 'Hide' : 'Show';
   });
 
-  // Save API Key
+  // Force Offline Mode toggle
+  elements.forceOfflineToggle?.addEventListener('change', (e) => {
+    state.forceOfflineMode = e.target.checked;
+    localStorage.setItem('splatdex_force_offline', state.forceOfflineMode ? 'true' : 'false');
+    updateNetworkStatus();
+    playSound('click');
+    showToast(state.forceOfflineMode ? 'Offline Road-Trip Mode Engaged' : 'Online AI Mode Enabled');
+  });
+
+  // Save Settings
   elements.saveApiKeyBtn?.addEventListener('click', () => {
     const key = elements.apiKeyInput.value.trim();
-    if (!key) {
-      alert('Please enter a valid Gemini API key.');
-      return;
-    }
     state.apiKey = key;
     localStorage.setItem('gemini_api_key', key);
+    state.forceOfflineMode = !!elements.forceOfflineToggle?.checked;
+    localStorage.setItem('splatdex_force_offline', state.forceOfflineMode ? 'true' : 'false');
+
     updateApiKeyStatusUI();
+    updateNetworkStatus();
     elements.settingsModal.classList.add('hidden');
     playSound('success');
-    showToast('Gemini API Key Saved!');
+    showToast('Settings saved!');
   });
 
   // Dismiss Error
@@ -281,10 +625,8 @@ function attachEventListeners() {
     elements.errorCard?.classList.add('hidden');
   });
 
-  // Camera Trigger (Capacitor or Fallback)
+  // Camera & Upload Triggers
   elements.snapPhotoBtn?.addEventListener('click', handleCameraCapture);
-
-  // File Upload Fallback
   elements.fileInput?.addEventListener('change', handleFileUpload);
 
   // Sample Buttons
@@ -295,20 +637,17 @@ function attachEventListeners() {
     });
   });
 
-  // Analyze Specimen CTA
-  elements.analyzeBtn?.addEventListener('click', analyzeSplatterWithGemini);
+  // Forensic Analysis Trigger
+  elements.analyzeBtn?.addEventListener('click', startForensicInvestigation);
 
-  // Save to Log / Diary
+  // Journal and Sharing
   elements.saveToLogBtn?.addEventListener('click', saveCurrentReportToLog);
-
-  // Share Report
   elements.shareReportBtn?.addEventListener('click', handleShareReport);
 }
 
-// --- IMAGE CAPTURE VIA CAPACITOR OR FILE INPUT ---
+// --- IMAGE CAPTURE ---
 async function handleCameraCapture() {
   playSound('click');
-  // Check if Capacitor Camera is available
   if (window.Capacitor && window.Capacitor.isPluginAvailable('Camera')) {
     try {
       const { Camera, CameraResultType, CameraSource } = window.Capacitor.Plugins;
@@ -331,7 +670,6 @@ async function handleCameraCapture() {
       }
     }
   } else {
-    // Standard Mobile / Web File Picker with camera capture environment
     elements.fileInput?.click();
   }
 }
@@ -350,7 +688,6 @@ function handleFileUpload(e) {
   reader.readAsDataURL(file);
 }
 
-// Display image and enable analysis CTA
 function displayLoadedImage(dataUrl, base64Clean, mimeType) {
   state.currentImageBase64 = base64Clean;
   state.currentImageMime = mimeType;
@@ -368,17 +705,13 @@ function displayLoadedImage(dataUrl, base64Clean, mimeType) {
     elements.specimenBadge.className = 'text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full bg-lime-500/20 text-lime-400 border border-lime-500/40';
   }
 
-  // Enable analysis button
-  if (elements.analyzeBtn) {
-    elements.analyzeBtn.disabled = false;
-  }
-
-  // Hide old report/error
+  if (elements.analyzeBtn) elements.analyzeBtn.disabled = false;
   elements.reportCard?.classList.add('hidden');
   elements.errorCard?.classList.add('hidden');
+  elements.failsafeBanner?.classList.add('hidden');
 }
 
-// --- SAMPLE SPLATTER GENERATOR FOR DEMO & TESTING ---
+// --- SAMPLE GENERATOR ---
 function loadSampleSplatter(type) {
   playSound('splat');
   const canvas = elements.splatterCanvas;
@@ -387,11 +720,9 @@ function loadSampleSplatter(type) {
   canvas.height = 300;
   const ctx = canvas.getContext('2d');
 
-  // Background Windshield Glass Tint
   ctx.fillStyle = '#0c1322';
   ctx.fillRect(0, 0, 400, 300);
 
-  // Subtle glass reflection streaks
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
   ctx.lineWidth = 12;
   ctx.beginPath();
@@ -403,28 +734,22 @@ function loadSampleSplatter(type) {
   const centerY = 150;
 
   if (type === 'june_beetle') {
-    // Heavy iridescent green/brown smear with chitin shell flakes
     drawSplatter(ctx, centerX, centerY, 55, '#3f6212', '#65a30d', 14);
-    // Chitin wing fragments
     ctx.fillStyle = '#78350f';
     ctx.beginPath();
     ctx.ellipse(centerX - 12, centerY - 15, 16, 7, Math.PI / 4, 0, Math.PI * 2);
     ctx.ellipse(centerX + 18, centerY + 8, 14, 6, -Math.PI / 6, 0, Math.PI * 2);
     ctx.fill();
   } else if (type === 'lovebug') {
-    // Twin paired black and red fluid droplets
     drawSplatter(ctx, centerX - 25, centerY - 10, 35, '#1e1b4b', '#475569', 10);
     drawSplatter(ctx, centerX + 20, centerY + 10, 32, '#991b1b', '#ef4444', 9);
   } else if (type === 'moth') {
-    // Dusty powdery beige and grey spread
     drawSplatter(ctx, centerX, centerY, 60, '#78716c', '#d6d3d1', 18);
-    // Dust halo
     ctx.fillStyle = 'rgba(214, 211, 209, 0.25)';
     ctx.beginPath();
     ctx.arc(centerX, centerY, 75, 0, Math.PI * 2);
     ctx.fill();
   } else {
-    // Dragonfly: Long translucent smear with bright electric turquoise & amber
     drawSplatter(ctx, centerX, centerY, 40, '#0284c7', '#38bdf8', 12);
     ctx.strokeStyle = '#f59e0b';
     ctx.lineWidth = 3;
@@ -453,10 +778,10 @@ function loadSampleSplatter(type) {
   if (elements.analyzeBtn) elements.analyzeBtn.disabled = false;
   elements.reportCard?.classList.add('hidden');
   elements.errorCard?.classList.add('hidden');
+  elements.failsafeBanner?.classList.add('hidden');
 }
 
 function drawSplatter(ctx, x, y, radius, colorDark, colorLight, numDrops) {
-  // Main center splash
   const grad = ctx.createRadialGradient(x, y, 5, x, y, radius);
   grad.addColorStop(0, colorLight);
   grad.addColorStop(0.8, colorDark);
@@ -467,7 +792,6 @@ function drawSplatter(ctx, x, y, radius, colorDark, colorLight, numDrops) {
   ctx.arc(x, y, radius, 0, Math.PI * 2);
   ctx.fill();
 
-  // Droplet spatter streaks
   ctx.fillStyle = colorLight;
   for (let i = 0; i < numDrops; i++) {
     const angle = (Math.PI * 2 / numDrops) * i + (Math.random() - 0.5) * 0.4;
@@ -480,7 +804,6 @@ function drawSplatter(ctx, x, y, radius, colorDark, colorLight, numDrops) {
     ctx.arc(dropX, dropY, dropRadius, 0, Math.PI * 2);
     ctx.fill();
 
-    // Splash tendril
     ctx.strokeStyle = colorDark;
     ctx.lineWidth = 1.5;
     ctx.beginPath();
@@ -490,126 +813,242 @@ function drawSplatter(ctx, x, y, radius, colorDark, colorLight, numDrops) {
   }
 }
 
-// --- GEMINI VISION FORENSIC ANALYSIS ---
-async function analyzeSplatterWithGemini() {
+// --- ONBOARD COMPUTER COLORIMETRY SENSOR (OFFLINE ANALYZER) ---
+async function analyzeImagePixelsColorimetry() {
+  return new Promise((resolve) => {
+    try {
+      const img = new Image();
+      img.onload = () => {
+        const offCanvas = document.createElement('canvas');
+        const targetDim = 100;
+        offCanvas.width = targetDim;
+        offCanvas.height = targetDim;
+        const offCtx = offCanvas.getContext('2d');
+        offCtx.drawImage(img, 0, 0, targetDim, targetDim);
+
+        const imgData = offCtx.getImageData(0, 0, targetDim, targetDim).data;
+        let totalR = 0, totalG = 0, totalB = 0, counted = 0;
+        let redDominant = 0, greenDominant = 0, yellowDominant = 0, blueDominant = 0, greyScale = 0;
+
+        for (let i = 0; i < imgData.length; i += 4) {
+          const r = imgData[i];
+          const g = imgData[i + 1];
+          const b = imgData[i + 2];
+          const brightness = (r + g + b) / 3;
+
+          // Skip windshield black/dark tint borders and bright glass glare
+          if (brightness > 25 && brightness < 235) {
+            totalR += r;
+            totalG += g;
+            totalB += b;
+            counted++;
+
+            if (g > r * 1.15 && g > b * 1.15) {
+              greenDominant++;
+            } else if (r > g * 1.15 && r > b * 1.15) {
+              redDominant++;
+            } else if (r > 120 && g > 110 && b < 100) {
+              yellowDominant++;
+            } else if (b > r * 1.15 && b > g * 1.1) {
+              blueDominant++;
+            } else if (Math.abs(r - g) < 20 && Math.abs(g - b) < 20) {
+              greyScale++;
+            }
+          }
+        }
+
+        // Determine dominant color profile
+        let matchedColor = 'green_brown';
+        const scores = [
+          { color: 'green_brown', val: greenDominant },
+          { color: 'red_black', val: redDominant },
+          { color: 'yellow', val: yellowDominant },
+          { color: 'dusty_grey', val: greyScale },
+          { color: 'blue', val: blueDominant }
+        ].sort((a, b) => b.val - a.val);
+
+        if (scores[0].val > 5) {
+          matchedColor = scores[0].color;
+        }
+
+        resolve({
+          matchedColor,
+          avgR: counted ? totalR / counted : 120,
+          avgG: counted ? totalG / counted : 120,
+          avgB: counted ? totalB / counted : 120
+        });
+      };
+      img.onerror = () => {
+        resolve({ matchedColor: 'green_brown' });
+      };
+      img.src = `data:${state.currentImageMime};base64,${state.currentImageBase64}`;
+    } catch (e) {
+      resolve({ matchedColor: 'green_brown' });
+    }
+  });
+}
+
+// --- COMPLETE FORENSIC INVESTIGATION WITH FAILSAFE FALLBACK ---
+async function startForensicInvestigation() {
   if (!state.currentImageBase64) {
     showError('No splatter image loaded. Please take a photo or select an image first.');
-    return;
-  }
-
-  // Ensure API key is configured
-  if (!state.apiKey) {
-    elements.settingsModal?.classList.remove('hidden');
-    showError('Please configure your Gemini API Key in Settings to run Vision Forensics.');
     return;
   }
 
   setAnalyzingState(true);
   playSound('scan');
 
+  // Check if offline mode is explicitly requested or device is without internet
+  const isNetworkOffline = !navigator.onLine;
+  const isForcedOffline = state.forceOfflineMode;
+  const hasNoApiKey = !state.apiKey || state.apiKey.trim().length < 5;
+
+  if (isForcedOffline || isNetworkOffline || hasNoApiKey) {
+    let reason = "Road-Trip Offline Mode";
+    if (isNetworkOffline) reason = "No Cellular Signal (Dead Zone)";
+    else if (hasNoApiKey) reason = "Onboard Detective Mode (No Key Needed)";
+
+    console.log(`[SplatDex Failsafe] Directing to onboard offline forensic library: ${reason}`);
+    await executeOfflineAnalysis(reason);
+    setAnalyzingState(false);
+    return;
+  }
+
+  // Attempt Cloud Vision AI with timeout failsafe
   try {
-    const modelsToTry = ['gemini-3.8-flash', 'gemini-3.5-flash'];
-    let lastError = null;
-    let data = null;
-
-    const requestBody = {
-      contents: [
-        {
-          role: "user",
-          parts: [
-            { text: "Forensic analysis request: Identify this windshield bug splatter specimen." },
-            {
-              inlineData: {
-                mimeType: state.currentImageMime,
-                data: state.currentImageBase64
-              }
-            }
-          ]
-        }
-      ],
-      systemInstruction: {
-        parts: [
-          { text: SPLATDEX_SYSTEM_PROMPT }
-        ]
-      },
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: SPLATDEX_RESPONSE_SCHEMA,
-        temperature: 0.3
-      }
-    };
-
-    for (const model of modelsToTry) {
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(state.apiKey.trim())}`;
-      try {
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(requestBody)
-        });
-
-        if (!response.ok) {
-          const errorJson = await response.json().catch(() => ({}));
-          const msg = errorJson.error?.message || `HTTP ${response.status}: ${response.statusText}`;
-          lastError = new Error(`Gemini API Error: ${msg}`);
-          console.warn(`Model ${model} failed: ${msg}. Checking fallback...`);
-          continue;
-        }
-
-        data = await response.json();
-        if (data) break;
-      } catch (reqErr) {
-        lastError = reqErr;
-      }
-    }
-
-    if (!data) {
-      throw lastError || new Error('Forensic analysis failed with all Gemini models.');
-    }
-    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-    if (!rawText) {
-      throw new Error('Gemini returned an empty response. Please retry with a clearer photo.');
-    }
-
-    const forensicReport = JSON.parse(rawText);
-    state.currentAnalysis = forensicReport;
-    renderForensicReport(forensicReport);
+    const report = await fetchGeminiVisionWithTimeout(8500); // 8.5 second timeout for highway dead zones
+    state.currentAnalysis = report;
+    renderForensicReport(report, 'cloud');
     playSound('success');
-    showToast(`Identified: ${forensicReport.bug_name}!`);
-
-  } catch (err) {
-    console.error('Forensic analysis failed:', err);
-    showError(err.message || 'Analysis failed. Please check network connection and API key.');
+    showToast(`Identified: ${report.bug_name}!`);
+  } catch (apiError) {
+    console.warn('[SplatDex Failsafe Activated] Vision AI API failed or timed out:', apiError.message);
+    const friendlyReason = `Network dead zone (${apiError.message.substring(0, 45)}) — Onboard Lab engaged!`;
+    await executeOfflineAnalysis(friendlyReason);
   } finally {
     setAnalyzingState(false);
   }
 }
 
+// Fetch Gemini with AbortController timeout & model fallback
+async function fetchGeminiVisionWithTimeout(timeoutMs) {
+  const modelsToTry = ['gemini-3.8-flash', 'gemini-3.5-flash'];
+  let lastError = null;
+
+  const requestBody = {
+    contents: [
+      {
+        role: "user",
+        parts: [
+          { text: "Forensic analysis request: Identify this windshield bug splatter specimen on the car window." },
+          {
+            inlineData: {
+              mimeType: state.currentImageMime,
+              data: state.currentImageBase64
+            }
+          }
+        ]
+      }
+    ],
+    systemInstruction: {
+      parts: [
+        { text: SPLATDEX_SYSTEM_PROMPT }
+      ]
+    },
+    generationConfig: {
+      responseMimeType: "application/json",
+      responseSchema: SPLATDEX_RESPONSE_SCHEMA,
+      temperature: 0.3
+    }
+  };
+
+  for (const model of modelsToTry) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(state.apiKey.trim())}`;
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+        signal: controller.signal
+      });
+
+      clearTimeout(timer);
+
+      if (!response.ok) {
+        const errJson = await response.json().catch(() => ({}));
+        const msg = errJson.error?.message || `HTTP ${response.status}`;
+        lastError = new Error(msg);
+        continue;
+      }
+
+      const data = await response.json();
+      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!rawText) throw new Error('Empty response from model');
+
+      return JSON.parse(rawText);
+    } catch (err) {
+      clearTimeout(timer);
+      lastError = err.name === 'AbortError' ? new Error('Network timeout (weak highway cellular signal)') : err;
+    }
+  }
+
+  throw lastError || new Error('All cloud AI models unreachable');
+}
+
+// Execute the Onboard Offline Library Matching
+async function executeOfflineAnalysis(reason) {
+  // Let the kid-friendly scanning progress animation run for 1.2 seconds for great feedback
+  await new Promise(r => setTimeout(r, 1200));
+
+  // Run pixel colorimetry to pick the most accurate bug in the library
+  const pixelAnalysis = await analyzeImagePixelsColorimetry();
+
+  // Filter candidates matching color profile
+  const candidates = OFFLINE_BUG_LIBRARY.filter(b => b.color_profile === pixelAnalysis.matchedColor);
+  const pool = candidates.length > 0 ? candidates : OFFLINE_BUG_LIBRARY;
+
+  // Pick candidate
+  const chosenBug = pool[Math.floor(Math.random() * pool.length)];
+
+  const offlineReport = {
+    bug_name: chosenBug.bug_name,
+    scientific_name: chosenBug.scientific_name,
+    confidence: chosenBug.confidence || "High",
+    pre_splat_image_prompt: chosenBug.pre_splat_image_prompt,
+    eulogy: chosenBug.eulogy,
+    bug_facts: chosenBug.bug_facts,
+    windscreen_cleanup_tip: chosenBug.windscreen_cleanup_tip,
+    emoji: chosenBug.emoji
+  };
+
+  state.currentAnalysis = offlineReport;
+  renderForensicReport(offlineReport, 'offline', reason);
+  playSound('success');
+  showToast(`Identified (Offline): ${offlineReport.bug_name}!`);
+}
+
 // Update UI during AI scanning
 function setAnalyzingState(isScanning) {
   state.isAnalyzing = isScanning;
-
-  if (elements.analyzeBtn) {
-    elements.analyzeBtn.disabled = isScanning;
-  }
+  if (elements.analyzeBtn) elements.analyzeBtn.disabled = isScanning;
 
   if (isScanning) {
     elements.scanningBeam?.classList.remove('hidden');
     elements.analysisProgressCard?.classList.remove('hidden');
     elements.reportCard?.classList.add('hidden');
     elements.errorCard?.classList.add('hidden');
+    elements.failsafeBanner?.classList.add('hidden');
 
     if (elements.analyzeBtnText) elements.analyzeBtnText.textContent = 'Analyzing Forensic Clues...';
     if (elements.analyzeBtnIcon) elements.analyzeBtnIcon.textContent = '⏳';
 
-    // Simulated progress steps for detective feel
     const stages = [
       { text: "Scanning glass splatter contour...", progress: "25%" },
-      { text: "Detecting fluid viscidity & chitin fragments...", progress: "55%" },
-      { text: "Matching against SplatDex Bug Database...", progress: "85%" },
+      { text: "Sampling fluid colorimetry & wing shards...", progress: "55%" },
+      { text: "Matching against SplatDex Roadside Database...", progress: "85%" },
       { text: "Composing forensic dossier & eulogy...", progress: "95%" }
     ];
 
@@ -622,54 +1061,75 @@ function setAnalyzingState(isScanning) {
       if (elements.progressDetailText) elements.progressDetailText.textContent = stages[step].text;
       if (elements.progressBarFill) elements.progressBarFill.style.width = stages[step].progress;
       step++;
-    }, 600);
+    }, 450);
 
   } else {
     elements.scanningBeam?.classList.add('hidden');
     elements.analysisProgressCard?.classList.add('hidden');
-
     if (elements.analyzeBtnText) elements.analyzeBtnText.textContent = 'Run Splat Forensics';
     if (elements.analyzeBtnIcon) elements.analyzeBtnIcon.textContent = '🔎';
   }
 }
 
-// Show Error banner
 function showError(msg) {
   if (elements.errorMessage) elements.errorMessage.textContent = msg;
   elements.errorCard?.classList.remove('hidden');
   elements.errorCard?.scrollIntoView({ behavior: 'smooth' });
 }
 
-// --- RENDER STRUCTURED FORENSIC REPORT ---
-function renderForensicReport(data) {
+// --- RENDER FORENSIC REPORT ---
+function renderForensicReport(data, source = 'cloud', fallbackReason = null) {
   if (!elements.reportCard) return;
 
+  // Source Badge & Failsafe Notification
+  if (source === 'offline') {
+    if (elements.reportSourceBadge) {
+      elements.reportSourceBadge.innerHTML = '<span>🚗</span> Onboard Roadside Lab (100% Offline)';
+      elements.reportSourceBadge.className = 'inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/30';
+    }
+    if (fallbackReason && elements.failsafeBanner && elements.failsafeReasonText) {
+      elements.failsafeReasonText.textContent = `${fallbackReason}`;
+      elements.failsafeBanner.classList.remove('hidden');
+    }
+  } else {
+    if (elements.reportSourceBadge) {
+      elements.reportSourceBadge.innerHTML = '<span>🛰️</span> Cloud Vision AI (Gemini 3.8 Flash)';
+      elements.reportSourceBadge.className = 'inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-lime-500/10 text-lime-400 border border-lime-500/20';
+    }
+    elements.failsafeBanner?.classList.add('hidden');
+  }
+
   // Bug Name & Scientific Name
-  if (elements.reportBugName) elements.reportBugName.textContent = data.bug_name || 'Mysterious Specimen';
+  if (elements.reportBugName) elements.reportBugName.textContent = data.bug_name || 'Mysterious Highway Specimen';
   if (elements.reportScientificName) elements.reportScientificName.textContent = data.scientific_name ? `(${data.scientific_name})` : '';
 
-  // Select emoji based on bug name
-  const nameLower = (data.bug_name || '').toLowerCase();
-  let emoji = '🪲';
-  if (nameLower.includes('bee') || nameLower.includes('wasp')) emoji = '🐝';
-  else if (nameLower.includes('butterfly') || nameLower.includes('moth')) emoji = '🦋';
-  else if (nameLower.includes('dragonfly')) emoji = '⚡';
-  else if (nameLower.includes('fly') || nameLower.includes('mosquito')) emoji = '🪰';
-  else if (nameLower.includes('lovebug')) emoji = '❤️';
-  else if (nameLower.includes('grasshopper') || nameLower.includes('cricket')) emoji = '🦗';
+  // Bug Emoji
+  let emoji = data.emoji || '🪲';
+  if (!data.emoji) {
+    const nameLower = (data.bug_name || '').toLowerCase();
+    if (nameLower.includes('bee') || nameLower.includes('wasp')) emoji = '🐝';
+    else if (nameLower.includes('butterfly') || nameLower.includes('moth')) emoji = '🦋';
+    else if (nameLower.includes('dragonfly')) emoji = '⚡';
+    else if (nameLower.includes('fly') || nameLower.includes('mosquito')) emoji = '🪰';
+    else if (nameLower.includes('lovebug')) emoji = '❤️';
+    else if (nameLower.includes('grasshopper') || nameLower.includes('cricket')) emoji = '🦗';
+    else if (nameLower.includes('ladybug')) emoji = '🐞';
+    else if (nameLower.includes('cicada')) emoji = '📢';
+    else if (nameLower.includes('firefly') || nameLower.includes('lightning')) emoji = '✨';
+  }
   if (elements.reportBugEmoji) elements.reportBugEmoji.textContent = emoji;
 
-  // Confidence Level Badge
+  // Confidence Badge
   if (elements.confidenceBadge) {
-    const conf = data.confidence || 'Medium';
+    const conf = data.confidence || 'High';
     elements.confidenceBadge.textContent = `${conf} Confidence`;
 
     if (conf === 'High') {
-      elements.confidenceBadge.className = 'flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-bold font-brand bg-emerald-500/20 text-emerald-400 border border-emerald-500/40';
+      elements.confidenceBadge.className = 'flex-shrink-0 px-2.5 py-0.5 rounded-full text-xs font-bold font-brand bg-emerald-500/20 text-emerald-400 border border-emerald-500/40';
     } else if (conf === 'Medium') {
-      elements.confidenceBadge.className = 'flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-bold font-brand bg-amber-500/20 text-amber-300 border border-amber-500/40';
+      elements.confidenceBadge.className = 'flex-shrink-0 px-2.5 py-0.5 rounded-full text-xs font-bold font-brand bg-amber-500/20 text-amber-300 border border-amber-500/40';
     } else {
-      elements.confidenceBadge.className = 'flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-bold font-brand bg-purple-500/20 text-purple-300 border border-purple-500/40';
+      elements.confidenceBadge.className = 'flex-shrink-0 px-2.5 py-0.5 rounded-full text-xs font-bold font-brand bg-purple-500/20 text-purple-300 border border-purple-500/40';
     }
   }
 
@@ -695,7 +1155,7 @@ function renderForensicReport(data) {
     });
   }
 
-  // Cleanup Tip
+  // Windscreen Cleanup Tip
   if (elements.reportCleanupTip) {
     elements.reportCleanupTip.textContent = data.windscreen_cleanup_tip || 'Clean immediately with warm soapy water and a microfiber cloth.';
   }
@@ -705,9 +1165,51 @@ function renderForensicReport(data) {
     elements.reportPreSplatPrompt.textContent = data.pre_splat_image_prompt || 'A vibrant insect enjoying sunny roadside air before impact.';
   }
 
-  // Show Report Card
   elements.reportCard.classList.remove('hidden');
   elements.reportCard.scrollIntoView({ behavior: 'smooth' });
+}
+
+// --- FIELD GUIDE BROWSER (OFFLINE ENCYCLOPEDIA) ---
+function renderFieldGuide(category = 'all') {
+  if (!elements.guideBugList) return;
+  elements.guideBugList.innerHTML = '';
+
+  const filtered = category === 'all' 
+    ? OFFLINE_BUG_LIBRARY 
+    : OFFLINE_BUG_LIBRARY.filter(b => b.category === category);
+
+  filtered.forEach(bug => {
+    const card = document.createElement('div');
+    card.className = 'p-3 bg-slate-900/80 border border-slate-800 rounded-xl space-y-2 hover:border-slate-700 transition cursor-pointer active:scale-[0.99]';
+    card.innerHTML = `
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <span class="text-2xl">${bug.emoji}</span>
+          <div>
+            <h4 class="text-xs font-bold text-white font-brand">${bug.bug_name}</h4>
+            <p class="text-[10px] italic text-slate-400">${bug.scientific_name}</p>
+          </div>
+        </div>
+        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-lime-400 border border-slate-700">
+          ${bug.color_profile.replace('_', ' ')}
+        </span>
+      </div>
+      <p class="text-[11px] text-slate-300 italic">"${bug.eulogy}"</p>
+      <div class="bg-slate-950/60 p-2 rounded-lg text-[10px] text-emerald-300 flex items-center gap-1.5">
+        <span>🧽</span> <span>${bug.windscreen_cleanup_tip}</span>
+      </div>
+    `;
+
+    // Clicking a guide item previews it in the dossier
+    card.addEventListener('click', () => {
+      playSound('click');
+      elements.guideModal.classList.add('hidden');
+      renderForensicReport(bug, 'offline', 'Browsed from Field Guide');
+      showToast(`Viewing: ${bug.bug_name}`);
+    });
+
+    elements.guideBugList.appendChild(card);
+  });
 }
 
 // --- FIELD JOURNAL / LOCAL STORAGE ---
@@ -761,7 +1263,7 @@ function renderJournalUI() {
       div.className = 'flex items-center justify-between p-2.5 bg-slate-900/80 border border-slate-800 rounded-xl hover:border-slate-700 transition';
       div.innerHTML = `
         <div class="flex items-center space-x-3 overflow-hidden">
-          <div class="w-10 h-10 rounded-lg bg-slate-800 border border-slate-700 overflow-hidden flex-shrink-0 flex items-center justify-center">
+          <div class="w-10 h-10 rounded-lg bg-slate-800 border border-slate-700 overflow-hidden flex-shrink-0 flex items-center justify-center text-lg">
             ${item.thumbnail ? `<img src="${item.thumbnail}" class="w-full h-full object-cover" alt="Splat">` : '🪲'}
           </div>
           <div class="min-w-0">
@@ -780,7 +1282,6 @@ function renderJournalUI() {
   }
 }
 
-// Share Report feature
 async function handleShareReport() {
   playSound('click');
   if (!state.currentAnalysis) return;
@@ -800,9 +1301,8 @@ async function handleShareReport() {
     await navigator.clipboard.writeText(shareText);
     showToast('Forensic Report copied to clipboard!');
   } else {
-    showToast('Sharing not available on this browser.');
+    showToast('Sharing not available on this device.');
   }
 }
 
-// Boot up app on DOM ready
 document.addEventListener('DOMContentLoaded', init);

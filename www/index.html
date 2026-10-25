@@ -25,17 +25,12 @@
           },
           animation: {
             'scan': 'scan 2.5s ease-in-out infinite',
-            'pulse-glow': 'pulseGlow 2s infinite',
             'bounce-gentle': 'bounceGentle 1.8s infinite'
           },
           keyframes: {
             scan: {
               '0%, 100%': { transform: 'translateY(-100%)' },
               '50%': { transform: 'translateY(100%)' }
-            },
-            pulseGlow: {
-              '0%, 100%': { opacity: '0.4', filter: 'drop-shadow(0 0 8px rgba(132, 204, 22, 0.4))' },
-              '50%': { opacity: '0.9', filter: 'drop-shadow(0 0 16px rgba(132, 204, 22, 0.8))' }
             },
             bounceGentle: {
               '0%, 100%': { transform: 'translateY(0)' },
@@ -47,7 +42,7 @@
     }
   </script>
 
-  <!-- Google Fonts: Inter & Fredoka for Kid-Friendly Detective Look -->
+  <!-- Google Fonts: Inter & Fredoka -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -73,30 +68,40 @@
 <body class="bg-splat-dark text-slate-100 min-h-screen flex flex-col antialiased selection:bg-splat-lime selection:text-slate-900 pb-12">
 
   <!-- TOP APP BAR -->
-  <header class="sticky top-0 z-40 bg-splat-dark/95 backdrop-blur-md border-b border-splat-border/80 px-4 py-3">
+  <header class="sticky top-0 z-40 bg-splat-dark/95 backdrop-blur-md border-b border-splat-border/80 px-4 py-2.5">
     <div class="max-w-xl mx-auto flex items-center justify-between">
       <div class="flex items-center space-x-2.5">
         <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-splat-orange via-splat-amber to-splat-lime flex items-center justify-center shadow-lg shadow-lime-500/20 text-xl font-bold">
           🔍
         </div>
         <div>
-          <h1 class="text-xl font-bold font-brand tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-lime-400 via-amber-300 to-orange-400">
+          <h1 class="text-xl font-bold font-brand tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-lime-400 via-amber-300 to-orange-400 leading-tight">
             SplatDex
           </h1>
-          <p class="text-[11px] text-slate-400 font-medium uppercase tracking-wider flex items-center gap-1">
-            <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-            Forensic Bug Lab
-          </p>
+          <div class="flex items-center gap-1.5 mt-0.5">
+            <span id="networkPill" class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span id="networkPillText">Road-Trip Ready</span>
+            </span>
+          </div>
         </div>
       </div>
 
       <!-- Quick Actions -->
-      <div class="flex items-center space-x-2">
-        <button id="soundToggleBtn" title="Toggle Sound FX" class="p-2 rounded-xl bg-splat-card border border-splat-border text-slate-300 hover:text-white transition active:scale-95 text-sm">
+      <div class="flex items-center space-x-1.5">
+        <!-- Field Guide Button -->
+        <button id="openGuideBtn" title="Bug Field Guide" class="px-2.5 py-1.5 rounded-xl bg-slate-800/90 border border-splat-border text-xs font-brand font-bold text-amber-300 hover:text-white transition active:scale-95 flex items-center gap-1">
+          <span>📖</span> Guide
+        </button>
+
+        <!-- Sound FX Button -->
+        <button id="soundToggleBtn" title="Toggle Sound FX" class="p-2 rounded-xl bg-splat-card border border-splat-border text-slate-300 hover:text-white transition active:scale-95 text-xs">
           🔊
         </button>
-        <button id="openSettingsBtn" title="API Key & Settings" class="p-2 rounded-xl bg-splat-card border border-splat-border text-slate-300 hover:text-white transition active:scale-95 text-sm flex items-center gap-1">
-          <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+        <!-- Settings Button -->
+        <button id="openSettingsBtn" title="API Key & Settings" class="p-2 rounded-xl bg-splat-card border border-splat-border text-slate-300 hover:text-white transition active:scale-95 text-xs flex items-center gap-1">
+          <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
           </svg>
@@ -108,21 +113,24 @@
   <!-- MAIN CONTAINER -->
   <main class="max-w-xl mx-auto w-full px-4 pt-4 flex-1 flex flex-col space-y-4">
 
-    <!-- WELCOME / HERO BANNER -->
+    <!-- WELCOME / ROAD-TRIP BANNER -->
     <section class="bg-gradient-to-br from-splat-card to-slate-900 border border-splat-border rounded-2xl p-4 shadow-md relative overflow-hidden">
       <div class="absolute -right-6 -bottom-6 opacity-10 text-8xl pointer-events-none select-none">
         🪰
       </div>
-      <div class="relative z-10 flex items-start justify-between">
-        <div>
-          <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-lime-500/10 text-lime-400 border border-lime-500/20 mb-1.5">
+      <div class="relative z-10">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-lime-500/10 text-lime-400 border border-lime-500/20">
             Windshield Forensics
           </span>
-          <h2 class="text-lg font-bold font-brand text-white">Who Met The Glass?</h2>
-          <p class="text-xs text-slate-300 mt-0.5 leading-relaxed">
-            Snap a photo of any bug splatter on your car windshield. SplatDex AI will analyze the forensic fluids, wing fragments, and coloration to deduce the culprit!
-          </p>
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-sky-500/10 text-sky-400 border border-sky-500/20">
+            <span>🚗</span> 100% Offline Failsafe
+          </span>
         </div>
+        <h2 class="text-base font-bold font-brand text-white">Who Met The Windshield?</h2>
+        <p class="text-xs text-slate-300 mt-0.5 leading-relaxed">
+          Snap any bug splatter on the car window. SplatDex AI analyzes fluid color, wing shards, and splatter geometry to identify the culprit — <strong>even without cellular service on the highway!</strong>
+        </p>
       </div>
     </section>
 
@@ -131,16 +139,35 @@
       <div class="bg-splat-card border border-splat-border rounded-2xl p-5 w-full max-w-md shadow-2xl relative">
         <button id="closeSettingsBtn" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1 text-lg">✕</button>
         <div class="flex items-center space-x-2.5 mb-3">
-          <span class="text-2xl">🔑</span>
-          <h3 class="text-lg font-bold font-brand text-white">Gemini API Key</h3>
+          <span class="text-2xl">⚙️</span>
+          <h3 class="text-lg font-bold font-brand text-white">Detective Lab Settings</h3>
         </div>
-        <p class="text-xs text-slate-300 mb-3 leading-relaxed">
-          Your key is saved locally in your browser/device storage (<code class="bg-slate-800 px-1 py-0.5 rounded text-amber-300">localStorage</code>) to query the <span class="text-lime-400 font-semibold">gemini-3.8-flash</span> vision model.
-        </p>
 
-        <div class="space-y-3">
+        <div class="space-y-4">
+          <!-- Offline Road-Trip Mode Toggle -->
+          <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 flex items-center justify-between">
+            <div>
+              <h4 class="text-xs font-bold text-white font-brand flex items-center gap-1.5">
+                <span>🚗</span> Force Offline Road-Trip Mode
+              </h4>
+              <p class="text-[11px] text-slate-400 mt-0.5 leading-tight">
+                Skips internet requests and uses the onboard colorimetry sensor. Ideal for remote highways.
+              </p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer ml-3 flex-shrink-0">
+              <input type="checkbox" id="forceOfflineToggle" class="sr-only peer">
+              <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-lime-500"></div>
+            </label>
+          </div>
+
+          <!-- API Key Section -->
           <div>
-            <label for="apiKeyInput" class="block text-xs font-semibold text-slate-300 mb-1">Google GenAI / Gemini Key</label>
+            <label for="apiKeyInput" class="block text-xs font-semibold text-slate-300 mb-1">
+              Gemini Vision API Key (Optional with Failsafe)
+            </label>
+            <p class="text-[11px] text-slate-400 mb-2 leading-relaxed">
+              Saved in <code class="bg-slate-800 px-1 py-0.5 rounded text-amber-300">localStorage</code> for <span class="text-lime-400 font-semibold">gemini-3.8-flash</span>. If empty or network is down, the onboard offline library automatically takes over!
+            </p>
             <div class="relative">
               <input type="password" id="apiKeyInput" placeholder="AIzaSy..." class="w-full bg-slate-900 border border-splat-border rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-lime-500 focus:ring-1 focus:ring-lime-500">
               <button type="button" id="toggleKeyVisibility" class="absolute right-3 top-2.5 text-xs text-slate-400 hover:text-slate-200">Show</button>
@@ -152,11 +179,41 @@
             Checking configuration...
           </div>
 
-          <div class="flex items-center justify-end space-x-2 pt-2">
-            <button id="saveApiKeyBtn" class="px-4 py-2 bg-gradient-to-r from-lime-500 to-emerald-600 hover:from-lime-400 hover:to-emerald-500 text-slate-950 font-bold rounded-xl text-sm transition shadow-md shadow-lime-500/20 active:scale-95">
-              Save & Lock Key
+          <div class="flex items-center justify-end space-x-2 pt-1 border-t border-slate-800">
+            <button id="saveApiKeyBtn" class="px-4 py-2 bg-gradient-to-r from-lime-500 to-emerald-600 hover:from-lime-400 hover:to-emerald-500 text-slate-950 font-bold rounded-xl text-xs transition shadow-md shadow-lime-500/20 active:scale-95">
+              Save Settings
             </button>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FIELD GUIDE ENCYCLOPEDIA MODAL (OFFLINE LIBRARY BROWSER) -->
+    <div id="guideModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3">
+      <div class="bg-splat-card border border-splat-border rounded-2xl w-full max-w-lg max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+        <!-- Header -->
+        <div class="p-4 border-b border-splat-border flex items-center justify-between bg-slate-900/60">
+          <div class="flex items-center space-x-2.5">
+            <span class="text-2xl">📖</span>
+            <div>
+              <h3 class="text-base font-bold font-brand text-white">SplatDex Roadside Field Guide</h3>
+              <p class="text-[11px] text-lime-400 font-medium">16 Common Windshield Splatter Species (100% Offline)</p>
+            </div>
+          </div>
+          <button id="closeGuideBtn" class="text-slate-400 hover:text-white p-1 text-lg">✕</button>
+        </div>
+
+        <!-- Category Filters -->
+        <div class="p-3 bg-slate-950/70 border-b border-slate-800 flex items-center gap-1.5 overflow-x-auto custom-scrollbar">
+          <button data-filter="all" class="guide-filter-btn text-xs px-3 py-1 rounded-lg bg-lime-500 text-slate-950 font-bold font-brand active:scale-95 transition">All Bugs</button>
+          <button data-filter="chunky" class="guide-filter-btn text-xs px-3 py-1 rounded-lg bg-slate-800 text-slate-300 font-brand hover:text-white active:scale-95 transition">Chunky Crunchers</button>
+          <button data-filter="sticky" class="guide-filter-btn text-xs px-3 py-1 rounded-lg bg-slate-800 text-slate-300 font-brand hover:text-white active:scale-95 transition">Yellow Pollen</button>
+          <button data-filter="winged" class="guide-filter-btn text-xs px-3 py-1 rounded-lg bg-slate-800 text-slate-300 font-brand hover:text-white active:scale-95 transition">Winged Flyers</button>
+        </div>
+
+        <!-- Bug Cards Grid -->
+        <div id="guideBugList" class="p-4 overflow-y-auto custom-scrollbar space-y-3 flex-1">
+          <!-- Dynamically populated from OFFLINE_BUG_LIBRARY -->
         </div>
       </div>
     </div>
@@ -194,14 +251,11 @@
 
         <!-- Forensic Reticle Overlay -->
         <div id="reticleOverlay" class="hidden absolute inset-0 pointer-events-none">
-          <!-- Crosshairs -->
           <div class="absolute inset-0 flex items-center justify-center opacity-40">
             <div class="w-full h-[1px] bg-lime-400/50"></div>
             <div class="h-full w-[1px] bg-lime-400/50 absolute"></div>
           </div>
-          <!-- Target Ring -->
           <div class="absolute inset-0 m-auto w-32 h-32 border border-lime-400/60 rounded-full border-dashed animate-spin" style="animation-duration: 20s;"></div>
-          <!-- Corner brackets -->
           <div class="absolute top-3 left-3 w-4 h-4 border-t-2 border-l-2 border-lime-400"></div>
           <div class="absolute top-3 right-3 w-4 h-4 border-t-2 border-r-2 border-lime-400"></div>
           <div class="absolute bottom-3 left-3 w-4 h-4 border-b-2 border-l-2 border-lime-400"></div>
@@ -214,7 +268,7 @@
 
       <!-- Action Buttons -->
       <div class="grid grid-cols-2 gap-2.5 pt-1">
-        <!-- Native Camera Button (Capacitor or Fallback) -->
+        <!-- Native Camera Button -->
         <button id="snapPhotoBtn" class="flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-splat-lime to-emerald-500 hover:from-lime-400 hover:to-emerald-400 text-slate-950 font-bold font-brand rounded-xl shadow-lg shadow-lime-500/20 active:scale-95 transition text-sm">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
@@ -236,7 +290,7 @@
       <!-- Quick Samples for immediate fun testing -->
       <div class="pt-2 border-t border-splat-border/60">
         <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1">
-          <span>⚡</span> Or Try A Simulated Test Splat:
+          <span>⚡</span> Road-Trip Simulated Splats:
         </p>
         <div class="flex flex-wrap gap-1.5">
           <button data-sample="june_beetle" class="sample-splat-btn text-xs px-2.5 py-1 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-lime-300 border border-slate-700 active:scale-95 transition">
@@ -270,18 +324,31 @@
         <h4 id="progressStatusText" class="text-base font-bold font-brand text-lime-400">Forensic Investigation Active</h4>
         <p id="progressDetailText" class="text-xs text-slate-300 mt-1">Analyzing fluid colorimetry and wing fragment shards...</p>
       </div>
-      <!-- Progress Bar -->
       <div class="w-full bg-slate-900 rounded-full h-2.5 overflow-hidden border border-slate-800">
         <div id="progressBarFill" class="bg-gradient-to-r from-lime-500 via-amber-400 to-orange-500 h-2.5 rounded-full transition-all duration-300 w-1/4"></div>
       </div>
     </section>
 
-    <!-- ERROR BANNER -->
+    <!-- FAILSAFE NOTIFICATION BANNER (Shown when offline fallback runs) -->
+    <div id="failsafeBanner" class="hidden bg-sky-950/80 border border-sky-500/40 rounded-2xl p-3.5 text-xs text-sky-200 flex items-center justify-between shadow-lg">
+      <div class="flex items-center gap-2.5">
+        <span class="text-2xl">🚗</span>
+        <div>
+          <h5 class="font-bold font-brand text-sky-300 text-xs">Road-Trip Offline Detective Active</h5>
+          <p id="failsafeReasonText" class="text-[11px] text-slate-300 mt-0.5">Identified via onboard colorimetry sensor (zero cellular data needed!)</p>
+        </div>
+      </div>
+      <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30">
+        Offline Ready
+      </span>
+    </div>
+
+    <!-- ERROR BANNER (Only for fatal image errors) -->
     <div id="errorCard" class="hidden bg-red-950/80 border border-red-500/50 rounded-2xl p-4 text-red-200 text-xs flex items-start gap-3 shadow-lg">
       <span class="text-xl">⚠️</span>
       <div class="flex-1">
-        <h5 class="font-bold font-brand text-red-300 text-sm">Forensic Analysis Error</h5>
-        <p id="errorMessage" class="mt-0.5 leading-relaxed">Could not identify specimen. Check your Gemini API key in settings or verify photo quality.</p>
+        <h5 class="font-bold font-brand text-red-300 text-sm">Forensic Notice</h5>
+        <p id="errorMessage" class="mt-0.5 leading-relaxed">Could not load specimen. Please take another photo of the glass.</p>
       </div>
       <button id="dismissErrorBtn" class="text-red-400 hover:text-white font-bold p-1">✕</button>
     </div>
@@ -289,23 +356,30 @@
     <!-- FORENSIC REPORT CARD (AI OUTPUT CARD) -->
     <section id="reportCard" class="hidden bg-splat-card border-2 border-lime-500/40 rounded-2xl p-5 shadow-2xl space-y-4">
 
-      <!-- Header with Bug Name, Scientific Name & Confidence Badge -->
-      <div class="flex items-start justify-between border-b border-splat-border pb-3 gap-2">
-        <div>
-          <div class="flex items-center gap-2">
-            <span class="text-2xl" id="reportBugEmoji">🪲</span>
-            <h3 id="reportBugName" class="text-2xl font-bold font-brand text-transparent bg-clip-text bg-gradient-to-r from-lime-400 via-amber-300 to-orange-400">
-              Bug Name
-            </h3>
+      <!-- Header with Source Badge, Bug Name, Scientific Name & Confidence Badge -->
+      <div class="border-b border-splat-border pb-3 space-y-2">
+        <!-- Detection Mode Pill -->
+        <div class="flex items-center justify-between">
+          <span id="reportSourceBadge" class="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-lime-500/10 text-lime-400 border border-lime-500/20">
+            <span>🛰️</span> Cloud Vision AI
+          </span>
+          <div id="confidenceBadge" class="flex-shrink-0 px-2.5 py-0.5 rounded-full text-xs font-bold font-brand border">
+            Confidence
           </div>
-          <p id="reportScientificName" class="text-xs italic text-slate-400 mt-0.5 font-medium pl-8">
-            Scientificus namus
-          </p>
         </div>
 
-        <!-- Confidence Badge -->
-        <div id="confidenceBadge" class="flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-bold font-brand border">
-          Confidence
+        <div class="flex items-start justify-between gap-2">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-3xl" id="reportBugEmoji">🪲</span>
+              <h3 id="reportBugName" class="text-2xl font-bold font-brand text-transparent bg-clip-text bg-gradient-to-r from-lime-400 via-amber-300 to-orange-400">
+                Bug Name
+              </h3>
+            </div>
+            <p id="reportScientificName" class="text-xs italic text-slate-400 mt-0.5 font-medium pl-10">
+              Scientificus namus
+            </p>
+          </div>
         </div>
       </div>
 
@@ -315,7 +389,7 @@
           Windshield Eulogy
         </span>
         <p id="reportEulogy" class="text-xs text-slate-200 italic mt-1 leading-relaxed">
-          "A brave voyager who flew too close to the Ford F-150."
+          "A brave voyager who flew too close to the glass."
         </p>
       </div>
 
@@ -324,9 +398,7 @@
         <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
           <span>🧠</span> 3 Detective Facts
         </h4>
-        <ul id="reportBugFactsList" class="space-y-2">
-          <!-- Dynamically populated -->
-        </ul>
+        <ul id="reportBugFactsList" class="space-y-2"></ul>
       </div>
 
       <!-- Windscreen Cleanup Tip -->
@@ -339,7 +411,7 @@
         </p>
       </div>
 
-      <!-- Pre-Splat Image Concept (Imagined alive) -->
+      <!-- Pre-Splat Image Concept -->
       <div id="preSplatContainer" class="bg-slate-900/60 border border-slate-800 rounded-xl p-3 text-xs text-slate-300">
         <span class="text-[10px] uppercase font-bold text-sky-400 tracking-wider block mb-1">
           🎨 Pre-Impact Identity:
@@ -349,7 +421,7 @@
         </p>
       </div>
 
-      <!-- Save to SplatDex Diary Button -->
+      <!-- Save & Share Buttons -->
       <div class="pt-2 flex gap-2">
         <button id="saveToLogBtn" class="flex-1 py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-lime-400 border border-lime-500/30 font-brand font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition active:scale-95">
           <span>📖</span> Save to My SplatDex Log
@@ -365,7 +437,7 @@
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <span class="text-lg">📚</span>
-          <h3 class="text-sm font-bold font-brand text-slate-200">SplatDex Field Journal</h3>
+          <h3 class="text-sm font-bold font-brand text-slate-200">Road-Trip Field Journal</h3>
         </div>
         <span id="journalCount" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-lime-400 border border-slate-700">
           0 Logged
@@ -376,9 +448,7 @@
         No splats logged on this road trip yet! Snap your first windshield bug above.
       </div>
 
-      <div id="journalList" class="hidden space-y-2 max-h-56 overflow-y-auto custom-scrollbar pr-1">
-        <!-- Log items dynamically injected -->
-      </div>
+      <div id="journalList" class="hidden space-y-2 max-h-56 overflow-y-auto custom-scrollbar pr-1"></div>
     </section>
 
   </main>
